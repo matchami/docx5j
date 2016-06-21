@@ -11,8 +11,10 @@ public class XLSXRange {
 	String sheet;
 	String startCell;
 	String endCell;
+	public XLSXRange(String startCell, String endCell) {
+		this(null, startCell, endCell);
+	}
 	public XLSXRange(String sheet, String startCell, String endCell) {
-		super();
 		this.sheet = sheet;
 		this.startCell = startCell.toUpperCase();
 		this.endCell = endCell.toUpperCase();
@@ -31,6 +33,12 @@ public class XLSXRange {
 	}
 	public String rangeAbsoluteReference() {
 		return sheet + "!" + absolute(startCell) + ":" + absolute(endCell);
+	}
+	public String singleCellSheetlessReference() {
+		return startCell;
+	}
+	public String rangeSheetlessReference() {
+		return startCell + ":" + endCell;
 	}
 	private String absolute(String cellRef) {
 		Matcher matcher = pattern.matcher(cellRef);
@@ -148,7 +156,11 @@ public class XLSXRange {
 	public static XLSXRange fromNumericReference(String sheet, int col, int row) {
 		return singleCell(sheet, getStr(col) + (row + 1));
 	}
-	
+
+	public static XLSXRange fromNumericReference(int col, int row) {
+		return singleCell(null, getStr(col) + (row + 1));
+	}
+
 	private static XLSXRange singleCell(String sheet, String cell) {
 		return new XLSXRange(sheet, cell, cell);
 	}

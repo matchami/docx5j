@@ -24,6 +24,8 @@ import org.docx4j.openpackaging.exceptions.InvalidFormatException;
 import org.docx4j.openpackaging.packages.SpreadsheetMLPackage;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
 
+import com.jumbletree.docx5j.xlsx.builders.WorkbookBuilder;
+
 public class LineChart extends XLSXChart {
 
 	private ArrayList<XLSXRange> series;
@@ -33,7 +35,7 @@ public class LineChart extends XLSXChart {
 	private XLSXRange cat;
 	private boolean catIsNum;
 	
-	public LineChart(WorksheetPart sheet, SpreadsheetMLPackage pkg, XLSXFactory factory) throws InvalidFormatException {
+	public LineChart(WorksheetPart sheet, SpreadsheetMLPackage pkg, WorkbookBuilder factory) throws InvalidFormatException {
 		super(sheet, pkg, factory);
 		this.series = new ArrayList<XLSXRange>();
 		this.seriesTitles = new ArrayList<SeriesTitle>();

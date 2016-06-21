@@ -11,12 +11,12 @@ import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.STBorder;
 import org.docx4j.wml.TblWidth;
 
-public class DOCXFactory {
+public class DOCXBuilder {
 
 	ObjectFactory factory;
 	private boolean cuedPageBreak = false;;
 
-	public DOCXFactory() {
+	public DOCXBuilder() {
 		factory = new ObjectFactory();
 	}
 	
@@ -41,7 +41,7 @@ public class DOCXFactory {
 		return new Style(css, factory);
 	}
 
-	public DOCXFactory pageBreak() {
+	public DOCXBuilder pageBreak() {
 		this.cuedPageBreak  = true;
 		return this;
 	}

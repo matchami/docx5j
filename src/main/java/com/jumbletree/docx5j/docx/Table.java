@@ -25,7 +25,7 @@ import org.docx4j.wml.TrPr;
 
 public class Table {
 
-	private DOCXFactory factory;
+	private DOCXBuilder factory;
 
 	//Defaults...
 	private int indent = 0;
@@ -57,40 +57,51 @@ public class Table {
 
 	private String borderCSS;
 	
-	public Table(DOCXFactory factory, String[][] data) {
+	public Table(DOCXBuilder factory, String[][] data) {
 		this.factory = factory;
 		this.cols = data.length;
 		this.rows = data[0].length;
 		this.data = data;
 	}
 	
-	public void setIndent(int indent) {
+	public Table setIndent(int indent) {
 		this.indent = indent;
+		
+		return this;
 	}
 	
-	public void setCellMargins(Insets margins) {
+	public Table setCellMargins(Insets margins) {
 		this.cellMargin = margins;
+		
+		return this;
 	}
 
-	public void setColumnWidths(int[] widths) {
+	public Table setColumnWidths(int[] widths) {
 		if (widths.length != data.length) {
 			throw new IllegalArgumentException("Size of width array does not match table size");
 		}
 		this.columnWidths = widths;
+
+		return this;
 	}
 	
-	public void setColumnFills(String[] fills) {
+	public Table setColumnFills(String[] fills) {
 		if (fills.length != data.length) {
 			throw new IllegalArgumentException("Size of fills array does not match table size");
 		}
 		this.cellFills = fills;
+
+		return this;
 	}
 	
 //	public void setColumnStyles(String[] styles) {
 //		this.cellStyles = styles;
 //	}
 	
-	public void addToDocument(MainDocumentPart main) {
+	/**
+	 * Adds the table to the document and for convenience returns the document builder
+	 */
+	public DOCXBuilder addToDocument(MainDocumentPart main) {
 		if (data == null) {
 			throw new IllegalArgumentException("Must supply data before adding to document");
 		}
@@ -209,11 +220,13 @@ public class Table {
         }
  
         main.addObject(table);
+        
+        return factory;
 	}
 
-	public void addHorizontalMerge(int row, int startCol, int colSpan) {
+	public Table addHorizontalMerge(int row, int startCol, int colSpan) {
 		if (colSpan == 1)
-			return;
+			return this;
 		//Check data
 		for (int i = 1; i<colSpan; i++) {
 			if (data[startCol + i][row] != null) {
@@ -222,30 +235,42 @@ public class Table {
 		}
 		
 		hMerges.put(new Point(startCol, row), colSpan);
+		
+		return this;
 	}
 
-	public void setColumnStyles(String[] styles) {
+	public Table setColumnStyles(String[] styles) {
 		if (styles.length != data.length) {
 			throw new IllegalArgumentException("Size of styles array does not match table size");
 		}
 		this.cellStyles = styles;
+		
+		return this;
 	}
 
-	public void setRowHeights(Integer[] heights) {
+	public Table setRowHeights(Integer[] heights) {
 		if (heights.length != data[0].length) {
 			throw new IllegalArgumentException("Size of heights array does not match table size");
 		}
 		this.rowHeights = heights;
+		
+		return this;
+
 	}
 
-	public void setTableBorders(String css) {
+	public Table setTableBorders(String css) {
 		borderCSS = css;
+		
+		return this;
 	}
 
-	public void setCellBorders(int i, int j, String css) {
+	public Table setCellBorders(int i, int j, String css) {
 		if (borders == null) {
 			borders = new String[data.length][data[0].length];
 		}
 		borders[i][j] = css;
+		
+		return this;
 	}
+
 }
