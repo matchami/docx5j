@@ -1,4 +1,4 @@
-package com.jumbletree.docx5j.xlsx;
+package com.jumbletree.docx5j.xlsx.builders;
 
 import java.awt.Color;
 
@@ -11,7 +11,7 @@ import org.docx4j.openpackaging.packages.SpreadsheetMLPackage;
 import org.docx4j.openpackaging.parts.PartName;
 import org.docx4j.openpackaging.parts.Parts;
 
-public interface FactoryMethods {
+public interface BuilderMethods {
 
 
 	public default <T> T createVal(Class<T> clazz, Object value) throws Docx4JException {

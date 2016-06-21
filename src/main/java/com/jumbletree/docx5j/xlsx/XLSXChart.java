@@ -87,11 +87,14 @@ import org.docx4j.openpackaging.parts.DrawingML.Chart;
 import org.docx4j.openpackaging.parts.DrawingML.Drawing;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
 
-public abstract class XLSXChart implements FactoryMethods {
+import com.jumbletree.docx5j.xlsx.builders.BuilderMethods;
+import com.jumbletree.docx5j.xlsx.builders.WorkbookBuilder;
 
-	private XLSXFactory factory;
+public abstract class XLSXChart implements BuilderMethods {
 
-	public XLSXChart(WorksheetPart sheet, SpreadsheetMLPackage pkg, XLSXFactory factory) throws InvalidFormatException {
+	private WorkbookBuilder factory;
+
+	public XLSXChart(WorksheetPart sheet, SpreadsheetMLPackage pkg, WorkbookBuilder factory) throws InvalidFormatException {
 		String prefix = "/xl/charts/chart";
 		this.chartNumber = getNextPartNumber(prefix, pkg);
 		PartName chartPartName = new PartName(prefix + chartNumber + ".xml");

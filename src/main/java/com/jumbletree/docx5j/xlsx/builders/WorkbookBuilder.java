@@ -1,12 +1,12 @@
-package com.jumbletree.docx5j.xlsx;
+package com.jumbletree.docx5j.xlsx.builders;
 
 import java.awt.Color;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -52,7 +52,11 @@ import org.xlsx4j.sml.STPatternType;
 import org.xlsx4j.sml.Sheet;
 import org.xlsx4j.sml.SheetData;
 
-public class XLSXFactory implements FactoryMethods {
+import com.jumbletree.docx5j.xlsx.LineChart;
+import com.jumbletree.docx5j.xlsx.ScatterChart;
+import com.jumbletree.docx5j.xlsx.XLSXRange;
+
+public class WorkbookBuilder implements BuilderMethods {
 
 	private SpreadsheetMLPackage pkg;
 	private ArrayList<WorksheetPart> sheets;
@@ -60,24 +64,25 @@ public class XLSXFactory implements FactoryMethods {
 	private ObjectFactory factory;
 	private CTSst strings;
 	private HashMap<String, Integer> stringCache;
+	private HashMap<String, Long> styles = new HashMap<>();
 
-	public XLSXFactory() throws InvalidFormatException, JAXBException {
+	public WorkbookBuilder() throws InvalidFormatException, JAXBException {
 		pkg = SpreadsheetMLPackage.createPackage();
 		factory = new ObjectFactory();
 		
+		//Create the default sheet
 		WorksheetPart sheet = pkg.createWorksheetPart(new PartName("/xl/worksheets/sheet1.xml"), "Sheet1", 1);
-
 		sheets = new ArrayList<WorksheetPart>();
 		sheets.add(sheet);
 
+		//Create the default styles
 		Styles styles = new Styles(new PartName("/xl/styles.xml"));
 		this.stylesheet = new CTStylesheet();
 		styles.setJaxbElement(stylesheet);
-
 		pkg.getWorkbookPart().addTargetPart(styles);
-		
+
+		//Add a bunch more defaults
 		createFont("Calibri", 11, Color.black, false, false);
-		
 		createDefaultFill();
 		createDefaultBorder();
 		createDefaultCellStyleXf();
@@ -87,9 +92,43 @@ public class XLSXFactory implements FactoryMethods {
 		//SharedStrings
 		SharedStrings strings = new SharedStrings(new PartName("/xl/sharedStrings.xml"));
 		strings.setJaxbElement(this.strings = new CTSst());
-		
 		pkg.getWorkbookPart().addTargetPart(strings);
 		this.stringCache = new HashMap<String, Integer>();
+	}
+	
+	public void installStyle(String name, int index) {
+		this.styles.put(name, new Long(index));
+	}
+
+	public WorksheetBuilder getSheet(int index) {
+		if (index >= sheets.size()) {
+			throw new IllegalArgumentException("Workbook does not have " + (index+1) + " sheets");
+		}
+		return new WorksheetBuilder(index, sheets.get(index), this);
+	}
+
+	public WorksheetBuilder appendSheet() throws Docx4JException, JAXBException {
+		int id = sheets.size() + 1;
+		//Work out the sheet filename
+		String filename = "/xl/worksheets/sheet" + id + ".xml";
+		
+		//Now work out the sheet name ... follow same logic as Excel
+		int max = 0;
+		
+		Pattern pattern = Pattern.compile("^Sheet(\\d+)$");
+		for (Sheet sheet : pkg.getWorkbookPart().getContents().getSheets().getSheet()) {
+			Matcher matcher = pattern.matcher(sheet.getName());
+			if (matcher.matches()) {
+				max = Math.max(max, Integer.parseInt(matcher.group(1)));
+			}
+		}
+		
+		String name = "Sheet" + (max+1);
+		
+		WorksheetPart sheet = pkg.createWorksheetPart(new PartName(filename), name, id);
+		sheets.add(sheet);
+		
+		return new WorksheetBuilder(id-1, sheet, this);
 	}
 
 	private void createDefaultCellStyle() {
@@ -143,7 +182,7 @@ public class XLSXFactory implements FactoryMethods {
 		fills.getFill().add(fill);
 	}
 
-	public int createStyle(Long formatId, Long fontId, Long fillId, Long borderId) {
+	int createStyle(Long formatId, Long fontId, Long fillId, Long borderId) {
 		CTXf xf = new CTXf();
 		xf.setNumFmtId(formatId == null ? 0 : formatId);
 		xf.setFontId(fontId == null ? 0L : fontId);
@@ -205,7 +244,7 @@ public class XLSXFactory implements FactoryMethods {
 		return 0;
 	}
 	
-	public int createFont(String fontName, int size, Color color, boolean bold, boolean italic) {
+	int createFont(String fontName, int size, Color color, boolean bold, boolean italic) {
 		CTFont font = new CTFont();
 		setFontSize(size, font);
 		setFontName(fontName, font);
@@ -275,24 +314,15 @@ public class XLSXFactory implements FactoryMethods {
 		setValue(sheet, col, row, value, null);
 	}
 
-	public void setValue(int sheet, int col, int row, String value, Long style) throws Docx4JException {
+	public void setValue(int sheet, int col, int row, String value, String styleName) throws Docx4JException {
 		Cell theCell = getCell(sheet, col, row);
 
 		theCell.setT(STCellType.S);
 
-		Integer index = stringCache.get(value);
-		if (index == null) {
-			index = strings.getSi().size();
-			CTRst si = new CTRst();
-			CTXstringWhitespace svalue = new CTXstringWhitespace();
-			svalue.setValue(value);
-			si.setT(svalue);
-			strings.getSi().add(si);
-			stringCache.put(value, index);
-		}
-		theCell.setV(index.toString());
-		if (style != null)
-			theCell.setS(style);
+		int index = getStringCache(value);
+		theCell.setV(String.valueOf(index));
+		if (styleName != null)
+			theCell.setS(styles.get(styleName));
 	}
 
 	protected Cell getCell(int sheet, int col, int row) throws Docx4JException {
@@ -348,12 +378,6 @@ public class XLSXFactory implements FactoryMethods {
 		return new ScatterChart(sheets.get(sheets.size()-1), pkg, this);
 	}
 
-	public void save(File toFile) throws IOException, Docx4JException {
-		FileOutputStream out = new FileOutputStream(toFile);
-		save(out);
-		out.close();
-	}
-
 	public void save(OutputStream out) throws IOException, Docx4JException {
 		//Finalise the styles
 		if (stylesheet.getNumFmts() != null)
@@ -372,52 +396,6 @@ public class XLSXFactory implements FactoryMethods {
 		out.flush();
 	}
 
-
-	public static void main(String[] args) throws Docx4JException, JAXBException, IOException {
-		XLSXFactory factory = new XLSXFactory();
-
-		long boldIndex = factory.createFont("Calibri", 11, Color.black, true, false);
-		long boldStyle = factory.createStyle(null, boldIndex, null, null);
-		
-		factory.setValue(0, 1, 0, "A Heading", boldStyle);
-
-		for (int i=1; i<=3; i++) {
-			factory.setValue(0, i, 3, "Column " + i);
-		}
-
-		for (int i=1; i<=3; i++) {
-			factory.setValue(0, 0, 3+i, "Row " + i);
-		}
-
-		for (int i=1; i<=3; i++) {
-			for (int j=1; j<=3; j++) {
-				factory.setValue(0, j, 3+i, new Integer(i + "" + j).doubleValue());
-			}
-		}
-
-		LineChart chart = factory.createLineChart();
-		chart.setLegendPosition(Location.BOTTOM);
-		chart.setCatRange(new XLSXRange("Sheet1", "A5", "A7"), false);
-		chart.addSeries(new XLSXRange("Sheet1", "B4", "B4"), new XLSXRange("Sheet1", "B5", "B7"), new LineProperties(new Color(0xff, 0x42, 0x0e)), null);
-		chart.addSeries(new XLSXRange("Sheet1", "C4", "C4"), new XLSXRange("Sheet1", "C5", "C7"), new LineProperties(new Color(0xff, 0x42, 0x0e)), null);
-		chart.addSeries(new XLSXRange("Sheet1", "D4", "D4"), new XLSXRange("Sheet1", "D5", "D7"), new LineProperties(new Color(0xff, 0xd3, 0x20)), null);
-
-		chart.setTitle("Chart Twitle");
-		chart.setXAxisLabel("Month");
-		chart.setYAxisLabel("Cost ($ excl GST)");
-		chart.create(new XLSXRange("Sheet1", "E5", "L30"));
-
-		//		ScatterChart chart2 = factory.createScatterChart();
-		//		chart2.addSeries("snob", new XLSXRange("Sheet1", "B5", "B7"), new XLSXRange("Sheet1", "C5", "C7"), new LineProperties(new Color(0xff, 0x42, 0x0e)), null);
-		//		chart2.addSeries(new XLSXRange("Sheet1", "B1", "B1"), new XLSXRange("Sheet1", "B5", "B7"), new XLSXRange("Sheet1", "D5", "D7"), new LineProperties(new Color(0xff, 0xd3, 0x20)), null);
-		//		
-		//		chart2.create(new XLSXRange("Sheet1", "J5", "N10"));
-
-		File file = new File("C:/Users/matchami/Desktop/trial1.xlsx");
-		factory.save(file);
-//		Desktop.getDesktop().open(file);
-	}
-
 	public String getCellValueString(XLSXRange cell) throws Docx4JException {
 		long rowNum = cell.startCellNumericRow() + 1;	//R is user-speak not machine speak
 		for (Sheet sheet : pkg.getWorkbookPart().getContents().getSheets().getSheet()) {
@@ -426,7 +404,7 @@ public class XLSXFactory implements FactoryMethods {
 				for (Row row : sheetPart.getContents().getSheetData().getRow()) {
 					if (row.getR().equals(rowNum)) {
 						for (Cell c : row.getC()) {
-							if (c.getR().equals(cell.startCell)) {
+							if (c.getR().equals(cell.getStartCell())) {
 								switch (c.getT()) {
 									case S:
 										//Shared string
@@ -444,5 +422,35 @@ public class XLSXFactory implements FactoryMethods {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Sets the sheet's name.  Called by the sheet's factory, rather than by the user directly.  Use 
+	 * getSheet(index).setName(name) instead.
+	 */
+	void setSheetName(int index, String name) throws Docx4JException {
+		pkg.getWorkbookPart().getContents().getSheets().getSheet().get(index).setName(name);
+	}
+
+	public String getSheetName(int index) throws Docx4JException {
+		return pkg.getWorkbookPart().getContents().getSheets().getSheet().get(index).getName();
+	}
+
+	public Long getStyle(String styleName) {
+		return styles.get(styleName);
+	}
+
+	public int getStringCache(String value) {
+		Integer index = stringCache.get(value);
+		if (index == null) {
+			index = strings.getSi().size();
+			CTRst si = new CTRst();
+			CTXstringWhitespace svalue = new CTXstringWhitespace();
+			svalue.setValue(value);
+			si.setT(svalue);
+			strings.getSi().add(si);
+			stringCache.put(value, index);
+		}
+		return index;
 	}
 }

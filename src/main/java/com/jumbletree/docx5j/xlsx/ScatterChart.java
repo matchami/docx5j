@@ -15,6 +15,8 @@ import org.docx4j.openpackaging.exceptions.InvalidFormatException;
 import org.docx4j.openpackaging.packages.SpreadsheetMLPackage;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
 
+import com.jumbletree.docx5j.xlsx.builders.WorkbookBuilder;
+
 public class ScatterChart extends XLSXChart {
 	private ArrayList<XLSXRange> xseries;
 	private ArrayList<XLSXRange> yseries;
@@ -22,7 +24,7 @@ public class ScatterChart extends XLSXChart {
 	private ArrayList<LineProperties> seriesLines;
 	private ArrayList<MarkerProperties> seriesMarkers;
 	
-	public ScatterChart(WorksheetPart sheet, SpreadsheetMLPackage pkg, XLSXFactory factory) throws InvalidFormatException {
+	public ScatterChart(WorksheetPart sheet, SpreadsheetMLPackage pkg, WorkbookBuilder factory) throws InvalidFormatException {
 		super(sheet, pkg, factory);
 		this.xseries = new ArrayList<XLSXRange>();
 		this.yseries = new ArrayList<XLSXRange>();

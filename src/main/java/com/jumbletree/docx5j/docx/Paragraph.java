@@ -20,17 +20,17 @@ import org.docx4j.wml.Text;
 
 public class Paragraph {
 
-	private DOCXFactory factory;
+	private DOCXBuilder factory;
 	private P p;
 	private PPr ppr;
 	private Tabs tabs;
 	private R run;
 
-	public Paragraph(DOCXFactory factory) {
+	public Paragraph(DOCXBuilder factory) {
 		this(factory, null, false);
 	}
 	
-	public Paragraph(DOCXFactory factory, String style, boolean pageBreakBefore) {
+	public Paragraph(DOCXBuilder factory, String style, boolean pageBreakBefore) {
 		this.factory = factory;
 		this.p = factory.factory.createP();
 		if (style != null) {
@@ -274,6 +274,10 @@ public class Paragraph {
 		this.tabs.getTab().add(tab);
 		
 		return this;
+	}
+	
+	public DOCXBuilder document() {
+		return factory;
 	}
 	
 //	public static void main(String[] args) {
