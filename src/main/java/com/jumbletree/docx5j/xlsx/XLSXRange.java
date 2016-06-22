@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.xlsx4j.sml.Cell;
+
 public class XLSXRange {
 	static Pattern pattern = Pattern.compile("([A-Z]+)([0-9]+)");
 
@@ -166,7 +168,9 @@ public class XLSXRange {
 	}
 	public static XLSXRange fromReference(String value) {
 		String[] bits = value.split("[\\!\\:]");
-		if (bits.length == 2) {
+		if (bits.length == 1) {
+			return singleCell(null, bits[0].replaceAll("\\$", ""));
+		} else if (bits.length == 2) {
 			return singleCell(bits[0], bits[1].replaceAll("\\$", ""));
 		}
 		return new XLSXRange(bits[0], bits[1].replaceAll("\\$", ""), bits[2].replaceAll("\\$", ""));
@@ -176,5 +180,8 @@ public class XLSXRange {
 	}
 	private boolean isSingleCell() {
 		return endCell.equals(startCell);
+	}
+	public static XLSXRange fromCell(Cell cell) {
+		return fromReference(cell.getR());
 	}
 }

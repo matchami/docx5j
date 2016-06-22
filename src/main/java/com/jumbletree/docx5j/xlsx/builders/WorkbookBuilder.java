@@ -2,33 +2,65 @@ package com.jumbletree.docx5j.xlsx.builders;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
+import javax.xml.transform.stream.StreamSource;
 
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.exceptions.InvalidFormatException;
 import org.docx4j.openpackaging.io3.Save;
 import org.docx4j.openpackaging.packages.SpreadsheetMLPackage;
 import org.docx4j.openpackaging.parts.PartName;
+import org.docx4j.openpackaging.parts.VMLPart;
+import org.docx4j.openpackaging.parts.SpreadsheetML.CommentsPart;
+import org.docx4j.openpackaging.parts.SpreadsheetML.PrinterSettings;
 import org.docx4j.openpackaging.parts.SpreadsheetML.SharedStrings;
 import org.docx4j.openpackaging.parts.SpreadsheetML.Styles;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
+import org.docx4j.vml.CTPath;
+import org.docx4j.vml.CTShadow;
+import org.docx4j.vml.CTShape;
+import org.docx4j.vml.CTShapetype;
+import org.docx4j.vml.CTStroke;
+import org.docx4j.vml.CTTextbox;
+import org.docx4j.vml.STExt;
+import org.docx4j.vml.STStrokeJoinStyle;
+import org.docx4j.vml.STTrueFalse;
+import org.docx4j.vml.officedrawing.CTIdMap;
+import org.docx4j.vml.officedrawing.CTShapeLayout;
+import org.docx4j.vml.officedrawing.STConnectType;
+import org.docx4j.vml.officedrawing.STInsetMode;
+import org.docx4j.vml.root.Xml;
+import org.docx4j.vml.spreadsheetDrawing.CTClientData;
 import org.xlsx4j.jaxb.Context;
+import org.xlsx4j.sml.CTAuthors;
 import org.xlsx4j.sml.CTBooleanProperty;
 import org.xlsx4j.sml.CTBorder;
 import org.xlsx4j.sml.CTBorderPr;
 import org.xlsx4j.sml.CTBorders;
+import org.xlsx4j.sml.CTCellAlignment;
 import org.xlsx4j.sml.CTCellStyle;
 import org.xlsx4j.sml.CTCellStyleXfs;
 import org.xlsx4j.sml.CTCellStyles;
 import org.xlsx4j.sml.CTCellXfs;
 import org.xlsx4j.sml.CTColor;
+import org.xlsx4j.sml.CTComment;
+import org.xlsx4j.sml.CTCommentList;
+import org.xlsx4j.sml.CTComments;
 import org.xlsx4j.sml.CTFill;
 import org.xlsx4j.sml.CTFills;
 import org.xlsx4j.sml.CTFont;
@@ -37,7 +69,11 @@ import org.xlsx4j.sml.CTFontName;
 import org.xlsx4j.sml.CTFontScheme;
 import org.xlsx4j.sml.CTFontSize;
 import org.xlsx4j.sml.CTFonts;
+import org.xlsx4j.sml.CTLegacyDrawing;
+import org.xlsx4j.sml.CTPageSetup;
 import org.xlsx4j.sml.CTPatternFill;
+import org.xlsx4j.sml.CTRElt;
+import org.xlsx4j.sml.CTRPrElt;
 import org.xlsx4j.sml.CTRst;
 import org.xlsx4j.sml.CTSst;
 import org.xlsx4j.sml.CTStylesheet;
@@ -46,17 +82,46 @@ import org.xlsx4j.sml.CTXstringWhitespace;
 import org.xlsx4j.sml.Cell;
 import org.xlsx4j.sml.ObjectFactory;
 import org.xlsx4j.sml.Row;
+import org.xlsx4j.sml.STBorderStyle;
 import org.xlsx4j.sml.STCellType;
 import org.xlsx4j.sml.STFontScheme;
+import org.xlsx4j.sml.STOrientation;
 import org.xlsx4j.sml.STPatternType;
 import org.xlsx4j.sml.Sheet;
 import org.xlsx4j.sml.SheetData;
 
+import com.jumbletree.docx5j.xlsx.CommentPosition;
 import com.jumbletree.docx5j.xlsx.LineChart;
 import com.jumbletree.docx5j.xlsx.ScatterChart;
 import com.jumbletree.docx5j.xlsx.XLSXRange;
 
 public class WorkbookBuilder implements BuilderMethods {
+
+	public class ObjectKey {
+
+		private Object[] data;
+		
+		public ObjectKey(Object ... data) {
+			this.data = data;
+		}
+
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(data);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this)
+				return true;
+			if (!(obj instanceof ObjectKey))
+				return false;
+			
+			return Arrays.equals(data, ((ObjectKey)obj).data);
+		}
+
+		
+	}
 
 	private SpreadsheetMLPackage pkg;
 	private ArrayList<WorksheetPart> sheets;
@@ -65,6 +130,10 @@ public class WorkbookBuilder implements BuilderMethods {
 	private CTSst strings;
 	private HashMap<String, Integer> stringCache;
 	private HashMap<String, Long> styles = new HashMap<>();
+	private HashMap<ObjectKey, Long> objectCache = new HashMap<>();
+	private List<CommentsPart> comments = new ArrayList<>();
+	private List<VMLPart> commentsDrawings = new ArrayList<>();
+	private Set<Long> thickBottomStyles = new HashSet<>();
 
 	public WorkbookBuilder() throws InvalidFormatException, JAXBException {
 		pkg = SpreadsheetMLPackage.createPackage();
@@ -166,23 +235,23 @@ public class WorkbookBuilder implements BuilderMethods {
 		border.setBottom(new CTBorderPr());
 		border.setLeft(new CTBorderPr());
 		border.setRight(new CTBorderPr());
-		border.setBottom(new CTBorderPr());
+		border.setTop(new CTBorderPr());
 		border.setDiagonal(new CTBorderPr());
 		stylesheet.setBorders(new CTBorders());
 		stylesheet.getBorders().getBorder().add(border);
 	}
 
+	/**
+	 * These two fills need to be in place, or excel has issues
+	 */
 	protected void createDefaultFill() {
 		CTFills fills = new CTFills();
 		stylesheet.setFills(fills);
-		CTFill fill = new CTFill();
-		CTPatternFill pattern = new CTPatternFill();
-		pattern.setPatternType(STPatternType.NONE);
-		fill.setPatternFill(pattern);
-		fills.getFill().add(fill);
+		createFill(null, null, STPatternType.NONE);
+		createFill(null, null, STPatternType.GRAY_125);
 	}
 
-	int createStyle(Long formatId, Long fontId, Long fillId, Long borderId) {
+	int createStyle(Long formatId, Long fontId, Long fillId, Long borderId, CTCellAlignment alignment) {
 		CTXf xf = new CTXf();
 		xf.setNumFmtId(formatId == null ? 0 : formatId);
 		xf.setFontId(fontId == null ? 0L : fontId);
@@ -202,6 +271,8 @@ public class WorkbookBuilder implements BuilderMethods {
 		}
 		//Always ref the default style
 		xf.setXfId(0L);
+		
+		xf.setAlignment(alignment);
 		
 		int index = stylesheet.getCellXfs().getXf().size();
 		stylesheet.getCellXfs().getXf().add(xf);
@@ -239,39 +310,94 @@ public class WorkbookBuilder implements BuilderMethods {
 		return 0;
 	}
 	
-	public int createBorder() {
-		//TODO
-		return 0;
+	Long createBorder(STBorderStyle style, Color color) {
+		return createBorder(style, color, style, color, style, color, style, color);
 	}
+	Long createBorder(STBorderStyle topStyle, Color topColor, STBorderStyle rightStyle, Color rightColor, STBorderStyle bottomStyle, Color bottomColor, STBorderStyle leftStyle, Color leftColor) {
+		ObjectKey key = new ObjectKey(topStyle, topColor, rightStyle, rightColor, bottomStyle, bottomColor, leftStyle, leftColor);
+		Long id = objectCache.get(key);
+		if (id == null) {
+			CTBorder border = new CTBorder();
+			border.setBottom(createBorderPr(bottomStyle, bottomColor));
+			border.setLeft(createBorderPr(leftStyle, leftColor));
+			border.setRight(createBorderPr(rightStyle, rightColor));
+			border.setTop(createBorderPr(topStyle, topColor));
+			border.setDiagonal(new CTBorderPr());
 	
-	int createFont(String fontName, int size, Color color, boolean bold, boolean italic) {
-		CTFont font = new CTFont();
-		setFontSize(size, font);
-		setFontName(fontName, font);
-		setFontColor(color, font);
-		if (bold) {
-			CTBooleanProperty bool = new CTBooleanProperty();
-			bool.setVal(true);
-			font.getNameOrCharsetOrFamily().add(factory.createCTFontB(bool));
+			int index = stylesheet.getBorders().getBorder().size();
+			stylesheet.getBorders().getBorder().add(border);
+
+			objectCache.put(key, id = new Long(index));
 		}
-		if (italic) {
-			CTBooleanProperty bool = new CTBooleanProperty();
-			bool.setVal(true);
-			font.getNameOrCharsetOrFamily().add(factory.createCTFontI(bool));
-		}
-		CTFontFamily family = new CTFontFamily();
-		family.setVal(2);
-		font.getNameOrCharsetOrFamily().add(factory.createCTFontFamily(family));
-		CTFontScheme scheme = new CTFontScheme();
-		scheme.setVal(STFontScheme.MINOR);
-		font.getNameOrCharsetOrFamily().add(factory.createCTFontScheme(scheme));
-		if (stylesheet.getFonts() == null) {
-			stylesheet.setFonts(new CTFonts());
-		}
-		int index = stylesheet.getFonts().getFont().size();
-		stylesheet.getFonts().getFont().add(font);
+		return id;
+	}
+
+	Long createFill(Color bgColor, Color fgColor, STPatternType patternType) {
+		ObjectKey key = new ObjectKey(bgColor, fgColor, patternType);
+		Long id = objectCache.get(key);
+		if (id == null) {
+
+			CTFill fill = new CTFill();
+			CTPatternFill pattern = new CTPatternFill();
+			fill.setPatternFill(pattern);
 		
-		return index;
+			if (bgColor != null)
+				pattern.setBgColor(createColor(bgColor));
+			if (fgColor != null)
+				pattern.setFgColor(createColor(fgColor));
+			pattern.setPatternType(patternType);
+			
+			int index = stylesheet.getFills().getFill().size();
+			stylesheet.getFills().getFill().add(fill);
+			
+			objectCache.put(key, id = new Long(index));
+		}
+		return id;
+	}
+
+	private CTBorderPr createBorderPr(STBorderStyle style, Color color) {
+		CTBorderPr pr = new CTBorderPr();
+		CTColor ctcolor = new CTColor();
+		ctcolor.setRgb(getColorBytes(color));
+		pr.setColor(ctcolor);
+		pr.setStyle(style);
+		return pr;
+	}
+
+	Long createFont(String fontName, int size, Color color, boolean bold, boolean italic) {
+		ObjectKey key = new ObjectKey(fontName, size, color, bold, italic);
+		Long id = objectCache.get(key);
+		
+		if (id == null) {
+			CTFont font = new CTFont();
+			setFontSize(size, font);
+			setFontName(fontName, font);
+			setFontColor(color, font);
+			if (bold) {
+				CTBooleanProperty bool = new CTBooleanProperty();
+				bool.setVal(true);
+				font.getNameOrCharsetOrFamily().add(factory.createCTFontB(bool));
+			}
+			if (italic) {
+				CTBooleanProperty bool = new CTBooleanProperty();
+				bool.setVal(true);
+				font.getNameOrCharsetOrFamily().add(factory.createCTFontI(bool));
+			}
+			CTFontFamily family = new CTFontFamily();
+			family.setVal(2);
+			font.getNameOrCharsetOrFamily().add(factory.createCTFontFamily(family));
+			CTFontScheme scheme = new CTFontScheme();
+			scheme.setVal(STFontScheme.MINOR);
+			font.getNameOrCharsetOrFamily().add(factory.createCTFontScheme(scheme));
+			if (stylesheet.getFonts() == null) {
+				stylesheet.setFonts(new CTFonts());
+			}
+			int index = stylesheet.getFonts().getFont().size();
+			stylesheet.getFonts().getFont().add(font);
+			
+			objectCache.put(key, id = new Long(index));
+		}
+		return id;
 	}
 	
 	private void setFontSize(long size, CTFont font){
@@ -284,8 +410,8 @@ public class WorkbookBuilder implements BuilderMethods {
 	private void setFontColor(Color color, CTFont font){
 		CTColor fontCol = new CTColor();
 		fontCol.setRgb(getColorBytes(color));
-		fontCol.setTheme( new Long(1) );
-		fontCol.setTint( new Double(0.0) );
+		//fontCol.setTheme( new Long(1) );
+		//fontCol.setTint( new Double(0.0) );
 		fontCol.setParent(font);
 		JAXBElement<CTColor> element1 = factory.createCTFontColor(fontCol);
 		font.getNameOrCharsetOrFamily().add(element1);
@@ -452,5 +578,197 @@ public class WorkbookBuilder implements BuilderMethods {
 			stringCache.put(value, index);
 		}
 		return index;
+	}
+
+	public void createComment(WorksheetBuilder worksheet, Cell cell, String author, String comment, CommentPosition position) throws Docx4JException {
+		int sheetIndex = sheets.indexOf(worksheet.sheet);
+		CTComments comments = null;
+		Xml drawings = null;
+		if (this.comments.size() <= sheetIndex || this.comments.get(sheetIndex) == null) {
+			CommentsPart commentsPart = new CommentsPart(new PartName("/xl/comments" + (sheetIndex+1) + ".xml"));
+			while (this.comments.size() <= sheetIndex) {
+				this.comments.add(null);
+			}
+			this.comments.set(sheetIndex, commentsPart);
+			String commentsId = worksheet.sheet.addTargetPart(commentsPart).getId();
+			
+			comments = new CTComments();
+			commentsPart.setContents(comments);
+			comments.setAuthors(new CTAuthors());
+			comments.setCommentList(new CTCommentList());
+			
+			//Also create a 'drawing' for the comments
+			VMLPart vml = new VMLPart();
+			drawings = new Xml();
+			vml.setContents(drawings);
+			//o:shapelayout
+			CTShapeLayout layout = new CTShapeLayout();
+			layout.setExt(STExt.EDIT);
+			CTIdMap map = new CTIdMap();
+			map.setExt(STExt.EDIT);
+			map.setData("1");
+			layout.setIdmap(map);
+			addJAXBElement(layout, drawings.getAny(), "urn:schemas-microsoft-com:office:office", "shapelayout", "o", CTShapeLayout.class);
+					
+			//v:shapetype
+			CTShapetype type = new CTShapetype();
+			type.setPath("m,l,21600r21600,l21600,xe");
+			type.setSpt(202f);
+			type.setCoordsize("21600,21600");
+			type.setVmlId("_x0000_t202");
+			CTStroke stroke = new CTStroke();
+			stroke.setJoinstyle(STStrokeJoinStyle.MITER);
+			addJAXBElement(stroke, type.getEGShapeElements(), CTStroke.class, "urn:schemas-microsoft-com:vml", "stroke", "v");
+			CTPath path = new CTPath();
+			path.setConnecttype(STConnectType.RECT);
+			path.setGradientshapeok(STTrueFalse.T);
+			addJAXBElement(path, type.getEGShapeElements(), CTPath.class, "urn:schemas-microsoft-com:vml", "path", "v");
+			
+			addJAXBElement(type, drawings.getAny(), "urn:schemas-microsoft-com:vml", "shapetype", "v", CTShapetype.class);
+			
+			while (this.commentsDrawings.size() <= sheetIndex) {
+				this.commentsDrawings.add(null);
+			}
+			this.commentsDrawings.set(sheetIndex, vml);
+			String drawingId = worksheet.sheet.addTargetPart(vml).getId();
+			CTLegacyDrawing legacy = new CTLegacyDrawing();
+			legacy.setId(drawingId);
+			worksheet.sheet.getContents().setLegacyDrawing(legacy);
+		} else {
+			comments = this.comments.get(sheetIndex).getContents();
+			drawings = this.commentsDrawings.get(sheetIndex).getContents();
+		}
+
+		//Make the actual comment
+		List<String> authors = comments.getAuthors().getAuthor();
+		int authorId = authors.size();
+		for (int i=0; i<authors.size(); i++) {
+			if (authors.get(i).equals(author)) {
+				authorId = i;
+				break;
+			}
+		}
+		if (authorId == authors.size()) {
+			authors.add(author);
+		}
+		
+		CTComment newComment = new CTComment();
+		newComment.setAuthorId(authorId);
+		newComment.setRef(cell.getR());
+		newComment.setText(createCommentText(author, comment));
+		
+		comments.getCommentList().getComment().add(newComment);
+		
+		//And create the drawing shape for it...
+		CTShape shape = new CTShape();
+		shape.setVmlId("_x0000_s" + (int)Math.floor(Math.random() * 10000));
+		shape.setFillcolor("#ffffe1");
+		shape.setStyle("position:absolute;margin-left:59.25pt;margin-top:59.25pt;width:108pt;height:59.25pt;z-index:1");
+		shape.setType("#_x0000_t202");
+		shape.setInsetmode(STInsetMode.AUTO);
+		addJAXBElement(shape, drawings.getAny(), "urn:schemas-microsoft-com:vml", "shape", "v", CTShape.class);
+
+		org.docx4j.vml.CTFill fill = new org.docx4j.vml.CTFill();
+		fill.setColor2("#ffffe1");
+		addJAXBElement(fill, shape.getEGShapeElements(), org.docx4j.vml.CTFill.class, "urn:schemas-microsoft-com:vml", "fill", "v");
+		
+		CTShadow shadow = new CTShadow();
+		shadow.setObscured(STTrueFalse.T);
+		shadow.setColor("black");
+		addJAXBElement(shadow, shape.getEGShapeElements(), CTShadow.class, "urn:schemas-microsoft-com:vml", "shadow", "v");
+		
+		CTPath path = new CTPath();
+		path.setConnecttype(STConnectType.NONE);
+		addJAXBElement(path, shape.getEGShapeElements(), CTPath.class, "urn:schemas-microsoft-com:vml", "path", "v");
+		
+		try {
+			JAXBContext jc = JAXBContext.newInstance(
+					org.docx4j.w14.ObjectFactory.class,
+					org.docx4j.w15.ObjectFactory.class,
+					org.docx4j.wml.ObjectFactory.class,
+					org.docx4j.vml.spreadsheetDrawing.ObjectFactory.class,
+					org.docx4j.vml.ObjectFactory.class,
+					org.docx4j.vml.officedrawing.ObjectFactory.class,
+					org.docx4j.vml.wordprocessingDrawing.ObjectFactory.class,
+					org.docx4j.vml.presentationDrawing.ObjectFactory.class);
+
+			JAXBElement<CTTextbox> box = jc.createUnmarshaller().unmarshal(new StreamSource(new StringReader("<textbox style=\"mso-direction-alt:auto\"><div style=\"text-align: left\" /></textbox>")), CTTextbox.class);
+			addJAXBElement(box.getValue(), shape.getEGShapeElements(), CTTextbox.class, "urn:schemas-microsoft-com:vml", "path", "v");
+			
+			XLSXRange cellRange = XLSXRange.fromCell(cell);
+			String clientData = "<ClientData ObjectType=\"Note\">" +
+					"<MoveWithCells />" +
+					"<SizeWithCells />" +
+					"<Anchor>" + position.toString() + "</Anchor>" +
+					"<AutoFill>False</AutoFill>" +
+					"<Row>" + cellRange.startCellNumericRow() + "</Row>" +
+					"<Column>" + cellRange.startCellNumericColumn() + "</Column>" +
+					"<Visible />" +
+				"</ClientData>";
+				
+				
+			JAXBElement<CTClientData> data = jc.createUnmarshaller().unmarshal(new StreamSource(new StringReader(clientData)), CTClientData.class);
+			addJAXBElement(data.getValue(), shape.getEGShapeElements(), CTClientData.class, "urn:schemas-microsoft-com:office:excel", "ClientData", "x");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		
+	}
+
+	private <T> void addJAXBElement(T layout, List<Object> any, String ns, String local, String prefix, Class<T> clazz) {
+		any.add(new JAXBElement<T>(new QName(ns, local, prefix), clazz, layout));
+	}
+
+	private <T> void addJAXBElement(T layout, List<JAXBElement<?>> any, Class<T> clazz, String ns, String local, String prefix) {
+		any.add(new JAXBElement<T>(new QName(ns, local, prefix), clazz, layout));
+	}
+
+	private CTRst createCommentText(String author, String comment) {
+		CTRst text = new CTRst();
+		text.getR().add(createCommentChunk(author + ": ", "<rPr><b/><sz val=\"9\"/><color indexed=\"81\" /><rFont val=\"Tahoma\"/><family val=\"2\"/></rPr>"));
+		text.getR().add(createCommentChunk(" " + comment, "<rPr><sz val=\"9\"/><color indexed=\"81\" /><rFont val=\"Tahoma\"/><family val=\"2\"/></rPr>"));
+		return text;
+	}
+
+	private CTRElt createCommentChunk(String value, String rpr) {
+		CTRElt r = null;
+		try {
+			JAXBContext jc = JAXBContext.newInstance(CTRPrElt.class);
+			JAXBElement<CTRElt> element = jc.createUnmarshaller().unmarshal(new StreamSource(new StringReader("<r>" + rpr + "</r>")), CTRElt.class); 
+			r = element.getValue();
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			r = new CTRElt();
+		}
+		CTXstringWhitespace text = new CTXstringWhitespace();
+		text.setValue(value);
+		text.setSpace("preserve");
+		r.setT(text);
+		return r;
+	}
+
+	public void installThickBottomStyle(int index) {
+		this.thickBottomStyles.add(new Long(index));
+	}
+
+	public boolean isThickBottomStyle(Long style) {
+		return thickBottomStyles.contains(style);
+	}
+
+	public void createPageSetup(WorksheetBuilder worksheet, InputStream data, STOrientation orientation, int scale, int paperSize) throws Docx4JException {
+		int sheetIndex = sheets.indexOf(worksheet.sheet);
+		PrinterSettings settings = new PrinterSettings(new PartName("/xl/printerSettings/printerSettings" + sheetIndex + ".bin"));
+		settings.setBinaryData(data);
+		
+		String id = worksheet.sheet.addTargetPart(settings).getId();
+		
+		CTPageSetup setup = new CTPageSetup();
+		setup.setOrientation(orientation);
+		setup.setScale(new Long(scale));
+		setup.setPaperSize(new Long(paperSize));
+		setup.setId(id);
+		
+		worksheet.sheet.getContents().setPageSetup(setup);
 	}
 }

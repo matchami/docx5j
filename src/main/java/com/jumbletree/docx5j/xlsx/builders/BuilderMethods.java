@@ -10,6 +10,9 @@ import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.SpreadsheetMLPackage;
 import org.docx4j.openpackaging.parts.PartName;
 import org.docx4j.openpackaging.parts.Parts;
+import org.xlsx4j.sml.CTColor;
+
+import com.fasterxml.jackson.core.base.GeneratorBase;
 
 public interface BuilderMethods {
 
@@ -42,6 +45,12 @@ public interface BuilderMethods {
 		return bool;
 	}
 	
+	public default CTColor createColor(Color color) {
+		CTColor colour = new CTColor();
+		colour.setRgb(getColorBytes(color));
+		return colour;
+	}
+	
 	public default int getNextPartNumber(String prefix, SpreadsheetMLPackage pkg) {
 		int chartNumber = 1;
 		Parts parts = pkg.getParts();
@@ -54,7 +63,7 @@ public interface BuilderMethods {
 		return chartNumber;
 	}
 	
-	public default CTSRgbColor createColor(Color color) {
+	public default CTSRgbColor createRGBColor(Color color) {
 		CTSRgbColor rgb = new CTSRgbColor();
 		rgb.setVal(getColorString(color));
 		return rgb;

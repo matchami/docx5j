@@ -1,16 +1,21 @@
 package com.jumbletree.docx5j.xlsx.builders;
 
 import java.awt.Color;
+import java.io.InputStream;
 import java.util.List;
 
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
+import org.xlsx4j.sml.CTBreak;
 import org.xlsx4j.sml.CTColor;
+import org.xlsx4j.sml.CTPageBreak;
+import org.xlsx4j.sml.CTPageMargins;
 import org.xlsx4j.sml.CTSheetDimension;
 import org.xlsx4j.sml.CTSheetPr;
 import org.xlsx4j.sml.Col;
 import org.xlsx4j.sml.Cols;
 import org.xlsx4j.sml.Row;
+import org.xlsx4j.sml.STOrientation;
 import org.xlsx4j.sml.SheetViews;
 import org.xlsx4j.sml.Worksheet;
 
@@ -20,7 +25,7 @@ import com.jumbletree.docx5j.xlsx.XLSXRange;
 
 public class WorksheetBuilder implements BuilderMethods {
 
-	private WorksheetPart sheet;
+	WorksheetPart sheet;
 	private WorkbookBuilder parent;
 	private int index;
 
@@ -135,5 +140,46 @@ public class WorksheetBuilder implements BuilderMethods {
 		rows.add(row);
 		
 		return new RowBuilder(row, this, parent);
+	}
+
+	public WorksheetBuilder setPageMargns(double header, double footer, double top, double right, double bottom, double left) throws Docx4JException {
+		CTPageMargins margins = new CTPageMargins();
+		margins.setHeader(header);
+		margins.setBottom(bottom);
+		margins.setTop(top);
+		margins.setLeft(left);
+		margins.setRight(right);
+		margins.setFooter(footer);
+		sheet.getContents().setPageMargins(margins);
+		return this;
+	}
+	
+	public WorksheetBuilder setPageSetup(InputStream data, STOrientation orientation, int scale, int paperSize) throws Docx4JException {
+		parent.createPageSetup(this, data, orientation, scale, paperSize);
+		return this;
+	}
+
+	public WorksheetBuilder addRowBreak(int after) throws Docx4JException {
+		return addRowBreak(after, null);
+	}
+
+	public WorksheetBuilder addRowBreak(int after, Integer max) throws Docx4JException {
+		Worksheet sheet = this.sheet.getContents();
+		CTPageBreak breaks = sheet.getRowBreaks();
+		if (breaks == null) {
+			sheet.setRowBreaks(breaks = new CTPageBreak());
+			breaks.setCount(new Long(0));
+			breaks.setManualBreakCount(new Long(0));
+		}
+		breaks.setCount(new Long(breaks.getCount() + 1));
+		breaks.setManualBreakCount(new Long(breaks.getManualBreakCount() + 1));
+		CTBreak brk = new CTBreak();
+		brk.setMan(true);
+		brk.setId(new Long(after));
+		if (max != null)
+			brk.setMax(max.longValue());
+		breaks.getBrk().add(brk);
+
+		return this;
 	}
 }

@@ -195,7 +195,7 @@ public abstract class XLSXChart implements BuilderMethods {
 		CTTextCharacterProperties rpr = new CTTextCharacterProperties();
 		rpr.setSz(1400);
 		CTSolidColorFillProperties fill = new CTSolidColorFillProperties();
-		fill.setSrgbClr(createColor(new Color(0x59, 0x59, 0x59)));
+		fill.setSrgbClr(createRGBColor(new Color(0x59, 0x59, 0x59)));
 		rpr.setSolidFill(fill);
 		TextFont font = new TextFont();
 		font.setTypeface("Calibri");
@@ -409,7 +409,7 @@ public abstract class XLSXChart implements BuilderMethods {
 		ln.setW(9360);
 		sppr.setLn(ln);
 		CTSolidColorFillProperties fill = new CTSolidColorFillProperties();
-		fill.setSrgbClr(createColor(new Color(0xb9, 0xb9, 0xb9)));
+		fill.setSrgbClr(createRGBColor(new Color(0xb9, 0xb9, 0xb9)));
 		ln.setSolidFill(fill);
 		ln.setRound(new CTLineJoinRound());
 		catax.setSpPr(sppr);
@@ -453,7 +453,7 @@ public abstract class XLSXChart implements BuilderMethods {
 		ln.setW(9360);
 		sppr.setLn(ln);
 		fill = new CTSolidColorFillProperties();
-		fill.setSrgbClr(createColor(new Color(0xb9, 0xb9, 0xb9)));
+		fill.setSrgbClr(createRGBColor(new Color(0xb9, 0xb9, 0xb9)));
 		ln.setSolidFill(fill);
 		valax.setSpPr(sppr);
 		valax.setCrossAx(createUnsignedInt(cataxId));
@@ -556,7 +556,7 @@ public abstract class XLSXChart implements BuilderMethods {
 			CTLineProperties ln = new CTLineProperties();
 			ln.setW(line.getWidth());
 //			fill = new CTSolidColorFillProperties();
-			fill.setSrgbClr(createColor(line.getColor()));
+			fill.setSrgbClr(createRGBColor(line.getColor()));
 			ln.setSolidFill(fill);
 			//Configure via properties
 			ln.setRound(new CTLineJoinRound());
