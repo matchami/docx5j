@@ -425,7 +425,7 @@ public class WorkbookBuilder implements BuilderMethods {
 	}
 
 	public void setValue(int sheet, int col, int row, double value) throws Docx4JException {
-		setValue(sheet, col, row, value, styles.get(""));
+		setValue(sheet, col, row, value, (Long)null);
 	}
 	
 	public void setValue(int sheet, int col, int row, double value, String styleName) throws Docx4JException {
@@ -441,7 +441,7 @@ public class WorkbookBuilder implements BuilderMethods {
 	}
 
 	public void setValue(int sheet, int col, int row, String value) throws Docx4JException {
-		setValue(sheet, col, row, value, styles.get(""));
+		setValue(sheet, col, row, value, (Long)null);
 	}
 
 	public void setValue(int sheet, int col, int row, String value, String styleName) throws Docx4JException {
