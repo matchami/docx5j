@@ -2,6 +2,9 @@ package com.jumbletree.docx5j.xlsx.builders;
 
 import java.util.List;
 
+import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.xlsx4j.sml.CTMergeCell;
+import org.xlsx4j.sml.CTMergeCells;
 import org.xlsx4j.sml.Cell;
 import org.xlsx4j.sml.Row;
 
@@ -36,6 +39,41 @@ public class RowBuilder {
 		
 		cells.add(cell);
 		return new CellBuilder(cell, this, parent, origin);
+	}
+	
+	public RowBuilder mergeCells(int start, int end) {
+		CTMergeCells merges = getMergeCells();
+		CTMergeCell merge = new CTMergeCell();
+		XLSXRange range = XLSXRange.fromNumericReference(start, row.getR().intValue()-1, end, row.getR().intValue()-1);
+		merge.setRef(range.rangeSheetlessReference());
+		merges.getMergeCell().add(merge);
+		return this;
+	}
+	
+	private CTMergeCells getMergeCells() {
+		try {
+			CTMergeCells cells = parent.sheet.getContents().getMergeCells();
+			if (cells == null) { 
+				cells = new CTMergeCells();
+				parent.sheet.getContents().setMergeCells(cells);
+			}
+			return cells;
+		} catch (Docx4JException e) {
+			//Not realistically possible if we've got this far
+			return null;
+		}
+	}
+
+	public RowBuilder skipCell() {
+		nextCell();
+		return this;
+	}
+	
+	public RowBuilder skipCells(int count) {
+		for (int i=0; i<count; i++) {
+			nextCell();
+		}
+		return this;
 	}
 
 	public RowBuilder addExplicitSpan(int min, int max) {

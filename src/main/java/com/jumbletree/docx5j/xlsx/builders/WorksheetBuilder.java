@@ -12,6 +12,7 @@ import org.xlsx4j.sml.CTPageBreak;
 import org.xlsx4j.sml.CTPageMargins;
 import org.xlsx4j.sml.CTSheetDimension;
 import org.xlsx4j.sml.CTSheetPr;
+import org.xlsx4j.sml.CTSheetProtection;
 import org.xlsx4j.sml.Col;
 import org.xlsx4j.sml.Cols;
 import org.xlsx4j.sml.Row;
@@ -141,6 +142,11 @@ public class WorksheetBuilder implements BuilderMethods {
 		
 		return new RowBuilder(row, this, parent);
 	}
+	
+	public WorksheetBuilder skipRow() throws Docx4JException {
+		nextRow();
+		return this;
+	}
 
 	public WorksheetBuilder setPageMargns(double header, double footer, double top, double right, double bottom, double left) throws Docx4JException {
 		CTPageMargins margins = new CTPageMargins();
@@ -180,6 +186,23 @@ public class WorksheetBuilder implements BuilderMethods {
 			brk.setMax(max.longValue());
 		breaks.getBrk().add(brk);
 
+		return this;
+	}
+
+	/**
+	 * Sets protection on this sheet.
+	 */
+	public WorksheetBuilder protect() throws Docx4JException {
+		Worksheet sheet = this.sheet.getContents();
+		
+		if (sheet.getSheetProtection() != null) 
+			return this;
+		
+		CTSheetProtection protection = new CTSheetProtection();
+		protection.setScenarios(true);
+		protection.setObjects(true);
+		protection.setSheet(true);
+		sheet.setSheetProtection(protection);
 		return this;
 	}
 }

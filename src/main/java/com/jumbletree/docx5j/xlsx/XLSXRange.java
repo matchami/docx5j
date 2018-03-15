@@ -158,6 +158,14 @@ public class XLSXRange {
 	public static XLSXRange fromNumericReference(String sheet, int col, int row) {
 		return singleCell(sheet, getStr(col) + (row + 1));
 	}
+	
+	public static XLSXRange fromNumericReference(int startCol, int startRow, int endCol, int endRow) {
+		return new XLSXRange(null, getStr(startCol) + (startRow + 1), getStr(endCol) + (endRow + 1));
+	}
+	
+	public static XLSXRange fromNumericReference(String sheet, int startCol, int startRow, int endCol, int endRow) {
+		return new XLSXRange(sheet, getStr(startCol) + (startRow + 1), getStr(endCol) + (endRow + 1));
+	}
 
 	public static XLSXRange fromNumericReference(int col, int row) {
 		return singleCell(null, getStr(col) + (row + 1));

@@ -12,6 +12,7 @@ public class CellBuilder {
 	private RowBuilder parent;
 	private WorkbookBuilder origin;
 	private WorksheetBuilder sheet;
+	private boolean unlocked;
 
 	public CellBuilder(Cell cell, RowBuilder rowFactory, WorksheetBuilder sheet, WorkbookBuilder workbookBuilder) {
 		this.cell = cell;
@@ -21,11 +22,22 @@ public class CellBuilder {
 	}
 
 	public CellBuilder style(String styleName) {
-		cell.setS(origin.getStyle(styleName));
+		cell.setS(unlocked ? origin.getUnlockedStyle(origin.getStyle(styleName)) : origin.getStyle(styleName));
 		parent.checkThickBottom(styleName);
 		return this;
 	}
 
+	/**
+	 * Unlocks a cell in a protected sheet.  Will automatically switch on sheet protection if it isn't already
+	 * @return
+	 */
+	public CellBuilder unlocked() throws Docx4JException {
+		sheet.protect();
+		this.unlocked = true;
+		cell.setS(origin.getUnlockedStyle(cell.getS()));
+		return this;
+	}
+	
 	public CellBuilder value(String string) {
 		cell.setT(STCellType.S);
 

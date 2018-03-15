@@ -53,6 +53,7 @@ import org.xlsx4j.sml.CTBorder;
 import org.xlsx4j.sml.CTBorderPr;
 import org.xlsx4j.sml.CTBorders;
 import org.xlsx4j.sml.CTCellAlignment;
+import org.xlsx4j.sml.CTCellProtection;
 import org.xlsx4j.sml.CTCellStyle;
 import org.xlsx4j.sml.CTCellStyleXfs;
 import org.xlsx4j.sml.CTCellStyles;
@@ -130,6 +131,7 @@ public class WorkbookBuilder implements BuilderMethods {
 	private CTSst strings;
 	private HashMap<String, Integer> stringCache;
 	private HashMap<String, Long> styles = new HashMap<>();
+	private HashMap<Long, Long> unlockedStyles = new HashMap<>();
 	private HashMap<ObjectKey, Long> objectCache = new HashMap<>();
 	private List<CommentsPart> comments = new ArrayList<>();
 	private List<VMLPart> commentsDrawings = new ArrayList<>();
@@ -770,5 +772,43 @@ public class WorkbookBuilder implements BuilderMethods {
 		setup.setId(id);
 		
 		worksheet.sheet.getContents().setPageSetup(setup);
+	}
+
+	/**
+	 * Provides support for unlocked cells in a locked worksheet.
+	 * 
+	 * The style with the given id is cloned but with the cell protection set to unlocked.
+	 */
+	public Long getUnlockedStyle(long styleId) {
+		Long id = unlockedStyles.get(styleId);
+		if (id != null) 
+			return id;
+		
+		//Find the original style
+		CTXf originalStyle = stylesheet.getCellXfs().getXf().get((int)styleId);
+		CTXf xf = new CTXf();
+		xf.setNumFmtId(originalStyle.getNumFmtId());
+		xf.setFontId(originalStyle.getFontId());
+		xf.setFillId(originalStyle.getFillId());
+		xf.setBorderId(originalStyle.getBorderId());
+		xf.setApplyNumberFormat(originalStyle.isApplyNumberFormat());
+		xf.setApplyFont(originalStyle.isApplyFont());
+		xf.setApplyFill(originalStyle.isApplyFill());
+		xf.setApplyBorder(originalStyle.isApplyBorder());
+		//Always ref the default style
+		xf.setXfId(0L);
+		
+		xf.setAlignment(originalStyle.getAlignment());
+		xf.setApplyProtection(true);
+		
+		CTCellProtection protection = new CTCellProtection();
+		protection.setLocked(false);
+		xf.setProtection(protection);
+		
+		long index = stylesheet.getCellXfs().getXf().size();
+		stylesheet.getCellXfs().getXf().add(xf);
+		
+		unlockedStyles.put(styleId, index);
+		return index;
 	}
 }
