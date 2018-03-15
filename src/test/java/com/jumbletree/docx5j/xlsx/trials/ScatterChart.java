@@ -1,6 +1,7 @@
 package com.jumbletree.docx5j.xlsx.trials;
 
 import java.awt.Color;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 
@@ -57,8 +58,8 @@ public class ScatterChart {
 		//		
 		//		chart2.create(new XLSXRange("Sheet1", "J5", "N10"));
 
-		File out = new File("C:/Users/matchami/Desktop/trial1.xlsx");
+		File out = new File("trial1.xlsx");
 		file.save(out);
-//		Desktop.getDesktop().open(file);
+		Desktop.getDesktop().open(out);
 	}
 }

@@ -72,14 +72,20 @@ public class StyleBuilder {
 	}
 	
 	public StyleBuilder withAlignment(STHorizontalAlignment horizontal, STVerticalAlignment vertical) {
+		withAlignment(horizontal, vertical, false);
+		return this;
+	}
+
+	public StyleBuilder withAlignment(STHorizontalAlignment horizontal, STVerticalAlignment vertical, boolean wrapText) {
 		CTCellAlignment alignment = new CTCellAlignment();
 		alignment.setHorizontal(horizontal);
 		alignment.setVertical(vertical);
 		this.alignment = alignment;
-		
+		this.alignment.setWrapText(wrapText);
 		return this;
 	}
-
+	
+	
 	public StyleBuilder installAs(String name) {
 		int index = parent.createStyle(formatId, fontId, fillId, borderId, alignment);
 		parent.installStyle(name, index);
