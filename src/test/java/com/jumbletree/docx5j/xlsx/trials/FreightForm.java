@@ -143,7 +143,7 @@ public class FreightForm {
 			.addColumnDefinition(11, false)
 			;
 		
-		File out = new File("C:\\Users\\matchami\\Desktop\\output\\test1.xlsx");
+		File out = new File("test1.xlsx");
 		file.save(out);
 		Desktop.getDesktop().open(out);
 	}

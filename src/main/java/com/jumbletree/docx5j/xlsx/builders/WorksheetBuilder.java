@@ -8,6 +8,8 @@ import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
 import org.xlsx4j.sml.CTBreak;
 import org.xlsx4j.sml.CTColor;
+import org.xlsx4j.sml.CTMergeCell;
+import org.xlsx4j.sml.CTMergeCells;
 import org.xlsx4j.sml.CTPageBreak;
 import org.xlsx4j.sml.CTPageMargins;
 import org.xlsx4j.sml.CTSheetDimension;
@@ -65,7 +67,7 @@ public class WorksheetBuilder implements BuilderMethods {
 			views = new SheetViews();
 			worksheet.setSheetViews(views);
 		}
-	
+		
 		views.getSheetView().add(view.createSheetView());
 		return this;
 	}
@@ -203,6 +205,18 @@ public class WorksheetBuilder implements BuilderMethods {
 		protection.setObjects(true);
 		protection.setSheet(true);
 		sheet.setSheetProtection(protection);
+		return this;
+	}
+	
+	public WorksheetBuilder addMergeCell(String merge) throws Docx4JException {
+		Worksheet worksheet = getWorksheet();
+		CTMergeCell mergeC = new CTMergeCell();
+		mergeC.setRef(merge);
+		if (worksheet.getMergeCells() == null) {
+			worksheet.setMergeCells(new CTMergeCells());
+		}
+		worksheet.getMergeCells().getMergeCell().add(mergeC);
+		worksheet.getMergeCells().setCount((long) worksheet.getMergeCells().getMergeCell().size());
 		return this;
 	}
 }

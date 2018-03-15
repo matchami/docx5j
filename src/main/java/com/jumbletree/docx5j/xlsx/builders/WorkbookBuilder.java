@@ -427,7 +427,11 @@ public class WorkbookBuilder implements BuilderMethods {
 	}
 
 	public void setValue(int sheet, int col, int row, double value) throws Docx4JException {
-		setValue(sheet, col, row, value, null);
+		setValue(sheet, col, row, value, (Long)null);
+	}
+	
+	public void setValue(int sheet, int col, int row, double value, String styleName) throws Docx4JException {
+		setValue(sheet, col, row, value, styles.get(styleName));
 	}
 	
 	public void setValue(int sheet, int col, int row, double value, Long style) throws Docx4JException {
@@ -439,19 +443,24 @@ public class WorkbookBuilder implements BuilderMethods {
 	}
 
 	public void setValue(int sheet, int col, int row, String value) throws Docx4JException {
-		setValue(sheet, col, row, value, null);
+		setValue(sheet, col, row, value, (Long)null);
 	}
 
 	public void setValue(int sheet, int col, int row, String value, String styleName) throws Docx4JException {
+		setValue(sheet, col, row, value, styles.get(styleName));
+	}
+	
+	public void setValue(int sheet, int col, int row, String value, Long style) throws Docx4JException {
 		Cell theCell = getCell(sheet, col, row);
 
 		theCell.setT(STCellType.S);
 
 		int index = getStringCache(value);
 		theCell.setV(String.valueOf(index));
-		if (styleName != null)
-			theCell.setS(styles.get(styleName));
+		if (style != null)
+			theCell.setS(styles.get(style));
 	}
+
 
 	protected Cell getCell(int sheet, int col, int row) throws Docx4JException {
 		SheetData sheetData = sheets.get(sheet).getContents().getSheetData();
@@ -592,7 +601,7 @@ public class WorkbookBuilder implements BuilderMethods {
 				this.comments.add(null);
 			}
 			this.comments.set(sheetIndex, commentsPart);
-			String commentsId = worksheet.sheet.addTargetPart(commentsPart).getId();
+			//String commentsId = worksheet.sheet.addTargetPart(commentsPart).getId();
 			
 			comments = new CTComments();
 			commentsPart.setContents(comments);

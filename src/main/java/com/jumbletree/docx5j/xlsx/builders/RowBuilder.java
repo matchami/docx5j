@@ -47,6 +47,8 @@ public class RowBuilder {
 		XLSXRange range = XLSXRange.fromNumericReference(start, row.getR().intValue()-1, end, row.getR().intValue()-1);
 		merge.setRef(range.rangeSheetlessReference());
 		merges.getMergeCell().add(merge);
+		merges.setCount((long) merges.getMergeCell().size());
+
 		return this;
 	}
 	
