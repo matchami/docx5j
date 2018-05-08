@@ -6,6 +6,7 @@ import org.xlsx4j.sml.CTCellAlignment;
 import org.xlsx4j.sml.STBorderStyle;
 import org.xlsx4j.sml.STHorizontalAlignment;
 import org.xlsx4j.sml.STPatternType;
+import org.xlsx4j.sml.STUnderlineValues;
 import org.xlsx4j.sml.STVerticalAlignment;
 
 public class StyleBuilder {
@@ -22,8 +23,16 @@ public class StyleBuilder {
 		this.parent = parent;
 	}
 	
+	public StyleBuilder withFont(String fontName, int size, Color color) {
+		return withFont(fontName, size, color, false, false, null);
+	}
+	
 	public StyleBuilder withFont(String fontName, int size, Color color, boolean bold, boolean italic) {
-		this.fontId = parent.createFont(fontName, size, color, bold, italic);
+		return withFont(fontName, size, color, bold, italic, null);
+	}
+	
+	public StyleBuilder withFont(String fontName, int size, Color color, boolean bold, boolean italic, STUnderlineValues underline) {
+		this.fontId = parent.createFont(fontName, size, color, bold, italic, underline);
 		return this;
 	}
 	

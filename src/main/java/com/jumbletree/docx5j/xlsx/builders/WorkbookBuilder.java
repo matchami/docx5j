@@ -78,6 +78,7 @@ import org.xlsx4j.sml.CTRPrElt;
 import org.xlsx4j.sml.CTRst;
 import org.xlsx4j.sml.CTSst;
 import org.xlsx4j.sml.CTStylesheet;
+import org.xlsx4j.sml.CTUnderlineProperty;
 import org.xlsx4j.sml.CTXf;
 import org.xlsx4j.sml.CTXstringWhitespace;
 import org.xlsx4j.sml.Cell;
@@ -88,6 +89,7 @@ import org.xlsx4j.sml.STCellType;
 import org.xlsx4j.sml.STFontScheme;
 import org.xlsx4j.sml.STOrientation;
 import org.xlsx4j.sml.STPatternType;
+import org.xlsx4j.sml.STUnderlineValues;
 import org.xlsx4j.sml.Sheet;
 import org.xlsx4j.sml.SheetData;
 
@@ -153,7 +155,7 @@ public class WorkbookBuilder implements BuilderMethods {
 		pkg.getWorkbookPart().addTargetPart(styles);
 
 		//Add a bunch more defaults
-		createFont("Calibri", 11, Color.black, false, false);
+		createFont("Calibri", 11, Color.black, false, false, null);
 		createDefaultFill();
 		createDefaultBorder();
 		createDefaultCellStyleXf();
@@ -366,8 +368,8 @@ public class WorkbookBuilder implements BuilderMethods {
 		return pr;
 	}
 
-	Long createFont(String fontName, int size, Color color, boolean bold, boolean italic) {
-		ObjectKey key = new ObjectKey(fontName, size, color, bold, italic);
+	Long createFont(String fontName, int size, Color color, boolean bold, boolean italic, STUnderlineValues underline) {
+		ObjectKey key = new ObjectKey(fontName, size, color, bold, italic, underline);
 		Long id = objectCache.get(key);
 		
 		if (id == null) {
@@ -384,6 +386,11 @@ public class WorkbookBuilder implements BuilderMethods {
 				CTBooleanProperty bool = new CTBooleanProperty();
 				bool.setVal(true);
 				font.getNameOrCharsetOrFamily().add(factory.createCTFontI(bool));
+			}
+			if (underline != null) {
+				CTUnderlineProperty uline = new CTUnderlineProperty();
+				uline.setVal(underline);
+				font.getNameOrCharsetOrFamily().add(factory.createCTFontU(uline));
 			}
 			CTFontFamily family = new CTFontFamily();
 			family.setVal(2);
