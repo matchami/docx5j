@@ -47,6 +47,14 @@ public class CellBuilder {
 		return this;
 	}
 
+	public TextBuilder multiStyleText() {
+		cell.setT(STCellType.S);
+		int index = origin.createMultiStyleText();
+		cell.setV(String.valueOf(index));
+		
+		return new TextBuilder(this, origin, cell.getS(), index);
+	}
+	
 	public RowBuilder row() {
 		return parent;
 	}

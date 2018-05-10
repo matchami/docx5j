@@ -31,6 +31,7 @@ import org.docx4j.openpackaging.parts.SpreadsheetML.PrinterSettings;
 import org.docx4j.openpackaging.parts.SpreadsheetML.SharedStrings;
 import org.docx4j.openpackaging.parts.SpreadsheetML.Styles;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
+import org.docx4j.sharedtypes.STVerticalAlignRun;
 import org.docx4j.vml.CTPath;
 import org.docx4j.vml.CTShadow;
 import org.docx4j.vml.CTShape;
@@ -79,6 +80,7 @@ import org.xlsx4j.sml.CTRst;
 import org.xlsx4j.sml.CTSst;
 import org.xlsx4j.sml.CTStylesheet;
 import org.xlsx4j.sml.CTUnderlineProperty;
+import org.xlsx4j.sml.CTVerticalAlignFontProperty;
 import org.xlsx4j.sml.CTXf;
 import org.xlsx4j.sml.CTXstringWhitespace;
 import org.xlsx4j.sml.Cell;
@@ -284,6 +286,25 @@ public class WorkbookBuilder implements BuilderMethods {
 		return index;
 	}
 
+	CTXf getStyle(int index) {
+		return stylesheet.getCellXfs().getXf().get(index);
+	}
+	
+	CTFont getStyleFont(int index) {
+		CTXf style = getStyle(index);
+		
+		Long font = style.getFontId();
+		if (font == null) {
+			throw new IllegalArgumentException("Cannot retrieve font from unstyled cell");
+		}
+		
+		return getFont(font.intValue());
+	}
+	
+	CTFont getFont(int index) {
+		return stylesheet.getFonts().getFont().get(index);
+	}
+	
 	protected CTXf createXf(Long formatId, Long fontId, Long borderId) {
 		CTXf xf = new CTXf();
 		xf.setNumFmtId(formatId == null ? 0L : formatId);
@@ -374,30 +395,10 @@ public class WorkbookBuilder implements BuilderMethods {
 		
 		if (id == null) {
 			CTFont font = new CTFont();
-			setFontSize(size, font);
-			setFontName(fontName, font);
-			setFontColor(color, font);
-			if (bold) {
-				CTBooleanProperty bool = new CTBooleanProperty();
-				bool.setVal(true);
-				font.getNameOrCharsetOrFamily().add(factory.createCTFontB(bool));
-			}
-			if (italic) {
-				CTBooleanProperty bool = new CTBooleanProperty();
-				bool.setVal(true);
-				font.getNameOrCharsetOrFamily().add(factory.createCTFontI(bool));
-			}
-			if (underline != null) {
-				CTUnderlineProperty uline = new CTUnderlineProperty();
-				uline.setVal(underline);
-				font.getNameOrCharsetOrFamily().add(factory.createCTFontU(uline));
-			}
-			CTFontFamily family = new CTFontFamily();
-			family.setVal(2);
-			font.getNameOrCharsetOrFamily().add(factory.createCTFontFamily(family));
-			CTFontScheme scheme = new CTFontScheme();
-			scheme.setVal(STFontScheme.MINOR);
-			font.getNameOrCharsetOrFamily().add(factory.createCTFontScheme(scheme));
+			List<JAXBElement<?>> fontProperties = font.getNameOrCharsetOrFamily();
+			
+			applyFont(fontName, size, color, bold, italic, underline, fontProperties);
+			
 			if (stylesheet.getFonts() == null) {
 				stylesheet.setFonts(new CTFonts());
 			}
@@ -408,29 +409,56 @@ public class WorkbookBuilder implements BuilderMethods {
 		}
 		return id;
 	}
+
+	protected void applyFont(String fontName, int size, Color color, boolean bold, boolean italic, STUnderlineValues underline, List<JAXBElement<?>> fontProperties) {
+		setFontSize(size, fontProperties);
+		setFontName(fontName, fontProperties);
+		setFontColor(color, fontProperties);
+		if (bold) {
+			CTBooleanProperty bool = new CTBooleanProperty();
+			bool.setVal(true);
+			fontProperties.add(factory.createCTFontB(bool));
+		}
+		if (italic) {
+			CTBooleanProperty bool = new CTBooleanProperty();
+			bool.setVal(true);
+			fontProperties.add(factory.createCTFontI(bool));
+		}
+		if (underline != null) {
+			CTUnderlineProperty uline = new CTUnderlineProperty();
+			uline.setVal(underline);
+			fontProperties.add(factory.createCTFontU(uline));
+		}
+		CTFontFamily family = new CTFontFamily();
+		family.setVal(2);
+		fontProperties.add(factory.createCTFontFamily(family));
+		CTFontScheme scheme = new CTFontScheme();
+		scheme.setVal(STFontScheme.MINOR);
+		fontProperties.add(factory.createCTFontScheme(scheme));
+	}
 	
-	private void setFontSize(long size, CTFont font){
+	private void setFontSize(long size, List<JAXBElement<?>> font){
 		CTFontSize fontSize = new CTFontSize();
 		fontSize.setVal(size);
 		fontSize.setParent(font);
-		font.getNameOrCharsetOrFamily().add(factory.createCTFontSz(fontSize));
+		font.add(factory.createCTFontSz(fontSize));
 	}
 
-	private void setFontColor(Color color, CTFont font){
+	private void setFontColor(Color color, List<JAXBElement<?>> font){
 		CTColor fontCol = new CTColor();
 		fontCol.setRgb(getColorBytes(color));
 		//fontCol.setTheme( new Long(1) );
 		//fontCol.setTint( new Double(0.0) );
 		fontCol.setParent(font);
 		JAXBElement<CTColor> element1 = factory.createCTFontColor(fontCol);
-		font.getNameOrCharsetOrFamily().add(element1);
+		font.add(element1);
 	}
 
-	private void setFontName(String name, CTFont font){
+	private void setFontName(String name, List<JAXBElement<?>> font){
 		CTFontName fontName = new CTFontName();
 		fontName.setVal(name);
 		fontName.setParent(font);
-		font.getNameOrCharsetOrFamily().add(factory.createCTFontName(fontName));
+		font.add(factory.createCTFontName(fontName));
 	}
 
 	public void setValue(int sheet, int col, int row, double value) throws Docx4JException {
@@ -826,5 +854,24 @@ public class WorkbookBuilder implements BuilderMethods {
 		
 		unlockedStyles.put(styleId, index);
 		return index;
+	}
+
+	int createMultiStyleText() {
+		int index = strings.getSi().size();
+		CTRst si = new CTRst();
+		strings.getSi().add(si);
+		//TODO Cache it???
+//		stringCache.put(value, index);
+		return index;
+	}
+
+	CTRst getMultiStyleString(int index) {
+		return strings.getSi().get(index);
+	}
+
+	JAXBElement<?> createFontModification(STVerticalAlignRun type) {
+		CTVerticalAlignFontProperty vertAlign = new CTVerticalAlignFontProperty();
+		vertAlign.setVal(type);
+		return factory.createCTRPrEltVertAlign(vertAlign);
 	}
 }
