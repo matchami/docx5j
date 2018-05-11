@@ -31,6 +31,8 @@ import org.docx4j.openpackaging.parts.SpreadsheetML.PrinterSettings;
 import org.docx4j.openpackaging.parts.SpreadsheetML.SharedStrings;
 import org.docx4j.openpackaging.parts.SpreadsheetML.Styles;
 import org.docx4j.openpackaging.parts.SpreadsheetML.WorksheetPart;
+import org.docx4j.openpackaging.parts.relationships.RelationshipsPart;
+import org.docx4j.relationships.Relationship;
 import org.docx4j.sharedtypes.STVerticalAlignRun;
 import org.docx4j.vml.CTPath;
 import org.docx4j.vml.CTShadow;
@@ -71,6 +73,8 @@ import org.xlsx4j.sml.CTFontName;
 import org.xlsx4j.sml.CTFontScheme;
 import org.xlsx4j.sml.CTFontSize;
 import org.xlsx4j.sml.CTFonts;
+import org.xlsx4j.sml.CTHyperlink;
+import org.xlsx4j.sml.CTHyperlinks;
 import org.xlsx4j.sml.CTLegacyDrawing;
 import org.xlsx4j.sml.CTPageSetup;
 import org.xlsx4j.sml.CTPatternFill;
@@ -624,6 +628,31 @@ public class WorkbookBuilder implements BuilderMethods {
 			stringCache.put(value, index);
 		}
 		return index;
+	}
+
+
+	public void createHyperlink(WorksheetBuilder sheet, Cell cell, String url) throws Docx4JException {
+		CTHyperlinks hyperlinks = sheet.sheet.getContents().getHyperlinks();
+		if (hyperlinks == null) {
+			hyperlinks = new CTHyperlinks();
+			sheet.sheet.getContents().setHyperlinks(hyperlinks);
+		}
+		List<CTHyperlink> links = hyperlinks.getHyperlink();
+		CTHyperlink link = new CTHyperlink();
+		link.setDisplay("url");
+		link.setRef(XLSXRange.fromCell(cell).singleCellSheetlessReference());
+		
+		//Get the rel
+		RelationshipsPart rels = sheet.sheet.getRelationshipsPart(true);
+		Relationship rel = new Relationship();
+		String id = "rId" + rels.size() + 1;
+		rel.setId(id);
+		rel.setType("http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink");
+		rel.setTarget(url);
+		rel.setTargetMode("External");
+		rels.addRelationship(rel);
+		link.setId(id);
+		links.add(link);
 	}
 
 	public void createComment(WorksheetBuilder worksheet, Cell cell, String author, String comment, CommentPosition position) throws Docx4JException {

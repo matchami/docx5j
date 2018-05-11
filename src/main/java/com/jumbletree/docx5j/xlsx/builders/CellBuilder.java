@@ -64,6 +64,12 @@ public class CellBuilder {
 		return this;
 	}
 
+	public CellBuilder hyperlink(String url) throws Docx4JException {
+		origin.createHyperlink(sheet, cell, url);
+		
+		return this;
+	}
+	
 	public CellBuilder comment(String author, String comment, CommentPosition position) throws Docx4JException {
 		origin.createComment(sheet, cell, author, comment, position);
 		
