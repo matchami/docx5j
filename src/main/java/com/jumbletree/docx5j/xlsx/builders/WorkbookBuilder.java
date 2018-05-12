@@ -436,9 +436,12 @@ public class WorkbookBuilder implements BuilderMethods {
 		CTFontFamily family = new CTFontFamily();
 		family.setVal(2);
 		fontProperties.add(factory.createCTFontFamily(family));
-		CTFontScheme scheme = new CTFontScheme();
-		scheme.setVal(STFontScheme.MINOR);
-		fontProperties.add(factory.createCTFontScheme(scheme));
+		//TODO figure out what the real requirements are here.
+		if (fontName.equals("Calibri")) {
+			CTFontScheme scheme = new CTFontScheme();
+			scheme.setVal(STFontScheme.MINOR);
+			fontProperties.add(factory.createCTFontScheme(scheme));
+		}
 	}
 	
 	private void setFontSize(long size, List<JAXBElement<?>> font){
