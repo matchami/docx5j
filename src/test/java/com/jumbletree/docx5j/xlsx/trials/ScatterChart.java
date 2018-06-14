@@ -42,7 +42,7 @@ public class ScatterChart {
 
 		LineChart chart = factory.createLineChart();
 		chart.setLegendPosition(Location.BOTTOM);
-		chart.setCatRange(new XLSXRange("Sheet1", "A5", "A7"), false);
+		chart.setCategoryRange(new XLSXRange("Sheet1", "A5", "A7"), false);
 		chart.addSeries(new XLSXRange("Sheet1", "B4", "B4"), new XLSXRange("Sheet1", "B5", "B7"), new LineProperties(new Color(0xff, 0x42, 0x0e)), null);
 		chart.addSeries(new XLSXRange("Sheet1", "C4", "C4"), new XLSXRange("Sheet1", "C5", "C7"), new LineProperties(new Color(0xff, 0x42, 0x0e)), null);
 		chart.addSeries(new XLSXRange("Sheet1", "D4", "D4"), new XLSXRange("Sheet1", "D5", "D7"), new LineProperties(new Color(0xff, 0xd3, 0x20)), null);
