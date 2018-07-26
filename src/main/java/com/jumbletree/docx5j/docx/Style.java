@@ -1,6 +1,7 @@
 package com.jumbletree.docx5j.docx;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
@@ -176,15 +177,16 @@ public class Style {
 //	    System.out.println(styles.getJaxbElement().getStyle());
 //	    System.out.println(styles.getJaxbElement().getStyle().size());
 		try {
-			for (int i = 0; i < styles.getContents().getStyle().size(); i++) {
-				if (styles.getContents().getStyle().get(i).getName().equals(styleName)) {
-					styles.getContents().getStyle().set(i, style);
+			List<org.docx4j.wml.Style> existingStyles = styles.getContents().getStyle();
+			for (int i = 0; i < existingStyles.size(); i++) {
+				if (existingStyles.get(i).getName().getVal().equals(styleName)) {
+					existingStyles.set(i, style);
 					added = true;
 					break;
 				}
 			}
 			if (!added) {
-				styles.getContents().getStyle().add(style);
+				existingStyles.add(style);
 			}
 		} catch (Docx4JException de) {
 			de.printStackTrace();
