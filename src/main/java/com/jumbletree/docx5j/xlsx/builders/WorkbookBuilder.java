@@ -53,6 +53,7 @@ import org.xlsx4j.sml.CTBorder;
 import org.xlsx4j.sml.CTBorderPr;
 import org.xlsx4j.sml.CTBorders;
 import org.xlsx4j.sml.CTCellAlignment;
+import org.xlsx4j.sml.CTCellFormula;
 import org.xlsx4j.sml.CTCellStyle;
 import org.xlsx4j.sml.CTCellStyleXfs;
 import org.xlsx4j.sml.CTCellStyles;
@@ -456,7 +457,24 @@ public class WorkbookBuilder implements BuilderMethods {
 		int index = getStringCache(value);
 		theCell.setV(String.valueOf(index));
 		if (style != null)
-			theCell.setS(styles.get(style));
+			theCell.setS(style);
+	}
+
+	public void setFormula(int sheet, int col, int row, String formula, String styleName) throws Docx4JException {
+		setFormula(sheet, col, row, formula, styles.get(styleName));
+	}
+
+	public void setFormula(int sheet, int col, int row, String formula, Long style) throws Docx4JException {
+		Cell theCell = getCell(sheet, col, row);
+
+		theCell.setT(STCellType.N);
+		
+		CTCellFormula f = Context.getsmlObjectFactory().createCTCellFormula();
+		f.setT(org.xlsx4j.sml.STCellFormulaType.NORMAL);
+		f.setValue(formula);
+		theCell.setF(f);
+		if (style != null)
+			theCell.setS(style);
 	}
 
 
