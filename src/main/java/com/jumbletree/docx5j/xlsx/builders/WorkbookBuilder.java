@@ -77,6 +77,8 @@ import org.xlsx4j.sml.CTFonts;
 import org.xlsx4j.sml.CTHyperlink;
 import org.xlsx4j.sml.CTHyperlinks;
 import org.xlsx4j.sml.CTLegacyDrawing;
+import org.xlsx4j.sml.CTNumFmt;
+import org.xlsx4j.sml.CTNumFmts;
 import org.xlsx4j.sml.CTPageSetup;
 import org.xlsx4j.sml.CTPatternFill;
 import org.xlsx4j.sml.CTRElt;
@@ -145,6 +147,8 @@ public class WorkbookBuilder implements BuilderMethods {
 	private List<CommentsPart> comments = new ArrayList<>();
 	private List<VMLPart> commentsDrawings = new ArrayList<>();
 	private Set<Long> thickBottomStyles = new HashSet<>();
+	private int userDefinedFormatIndex = 164;
+	private HashMap<String, Long> userDefinedFormats = new HashMap<>();
 
 	public WorkbookBuilder() throws InvalidFormatException, JAXBException {
 		pkg = SpreadsheetMLPackage.createPackage();
@@ -260,6 +264,25 @@ public class WorkbookBuilder implements BuilderMethods {
 		stylesheet.setFills(fills);
 		createFill(null, null, STPatternType.NONE);
 		createFill(null, null, STPatternType.GRAY_125);
+	}
+
+	int createStyle(String formatDefinition, Long fontId, Long fillId, Long borderId, CTCellAlignment alignment) {
+		Long formatId = this.userDefinedFormats.get(formatDefinition);
+		if (formatId == null) {
+			formatId = Long.valueOf(userDefinedFormatIndex++);
+			this.userDefinedFormats.put(formatDefinition, formatId);
+			//And add it to the definitions
+			CTNumFmts formats = stylesheet.getNumFmts();
+			if (formats == null) {
+				formats = new CTNumFmts();
+				stylesheet.setNumFmts(formats);
+			}
+			CTNumFmt format = new CTNumFmt();
+			format.setNumFmtId(formatId.longValue());
+			format.setFormatCode(formatDefinition);
+			formats.getNumFmt().add(format);
+		}
+		return createStyle(formatId, fontId, fillId, borderId, alignment);
 	}
 
 	int createStyle(Long formatId, Long fontId, Long fillId, Long borderId, CTCellAlignment alignment) {
@@ -557,8 +580,7 @@ public class WorkbookBuilder implements BuilderMethods {
 	}
 
 	/**
-	 * 
-	 * @param series a list of name, range pairs that will make up the chart eg createChart("First series", "Sheet1!$B$1:$B$20");
+	 * Creates aline chart on the last sheet in the workbook
 	 * @throws Docx4JException 
 	 */
 	public LineChart createLineChart() throws Docx4JException {
@@ -922,5 +944,9 @@ public class WorkbookBuilder implements BuilderMethods {
 		CTVerticalAlignFontProperty vertAlign = new CTVerticalAlignFontProperty();
 		vertAlign.setVal(type);
 		return factory.createCTRPrEltVertAlign(vertAlign);
+	}
+	
+	SpreadsheetMLPackage getSpreadsheetMLPackage() {
+		return pkg;
 	}
 }

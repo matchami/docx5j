@@ -18,6 +18,7 @@ public class StyleBuilder {
 	private CTCellAlignment alignment;
 	private WorkbookBuilder parent;
 	private boolean thickBottom;
+	private String formatDefinition;
 	
 	public StyleBuilder(WorkbookBuilder parent) {
 		this.parent = parent;
@@ -37,10 +38,16 @@ public class StyleBuilder {
 	}
 	
 	public StyleBuilder withFormat(int builtInFormat) {
-		this.formatId = new Long(builtInFormat);
+		this.formatId = Long.valueOf(builtInFormat);
 		return this;
 	}
 	
+	public StyleBuilder withFormat(String formatDefinition) {
+		this.formatId = null;
+		this.formatDefinition = formatDefinition;
+		return this;
+	}
+
 	public StyleBuilder withBorder(STBorderStyle style, Color color) {
 		this.borderId = parent.createBorder(style, color);
 		return this;
@@ -96,7 +103,9 @@ public class StyleBuilder {
 	
 	
 	public StyleBuilder installAs(String name) {
-		int index = parent.createStyle(formatId, fontId, fillId, borderId, alignment);
+		int index = formatId == null && formatDefinition != null ?
+				parent.createStyle(formatDefinition, fontId, fillId, borderId, alignment) :
+				parent.createStyle(formatId, fontId, fillId, borderId, alignment);
 		parent.installStyle(name, index);
 		if (thickBottom)
 			parent.installThickBottomStyle(index);
