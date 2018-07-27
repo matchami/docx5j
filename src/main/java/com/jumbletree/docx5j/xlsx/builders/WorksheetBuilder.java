@@ -22,6 +22,7 @@ import org.xlsx4j.sml.STOrientation;
 import org.xlsx4j.sml.SheetViews;
 import org.xlsx4j.sml.Worksheet;
 
+import com.jumbletree.docx5j.xlsx.LineChart;
 import com.jumbletree.docx5j.xlsx.SheetFormat;
 import com.jumbletree.docx5j.xlsx.View;
 import com.jumbletree.docx5j.xlsx.XLSXRange;
@@ -218,5 +219,9 @@ public class WorksheetBuilder implements BuilderMethods {
 		worksheet.getMergeCells().getMergeCell().add(mergeC);
 		worksheet.getMergeCells().setCount((long) worksheet.getMergeCells().getMergeCell().size());
 		return this;
+	}
+	
+	public LineChart createLineChart() throws Docx4JException {
+		return new LineChart(sheet, parent.getSpreadsheetMLPackage(), parent);
 	}
 }

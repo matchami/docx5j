@@ -1,6 +1,8 @@
 package com.jumbletree.docx5j.xlsx;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -136,7 +138,7 @@ public abstract class XLSXChart implements BuilderMethods {
 	Location legendPosition = Location.RIGHT;
 	private String title;
 	String xAxisLabel;
-	String yAxisLabel;
+	List<String> yAxisLabel = new ArrayList<>();
 	
 	public void create(XLSXRange cellAnchor) throws Docx4JException {
 		//Create the actual chart object's xml
@@ -388,56 +390,59 @@ public abstract class XLSXChart implements BuilderMethods {
 		chart.setShowDLblsOverMax(createBoolean(false));
 	}
 
-	protected void setupAxes(CTPlotArea ctp, int cataxId, int valaxId) throws Docx4JException {
+	protected void setupAxes(CTPlotArea ctp, int cataxId, int valaxId, boolean first, int axis) throws Docx4JException {
 		//Axes
-		CTCatAx catax = new CTCatAx();
-		catax.setAxId(createUnsignedInt(cataxId));
-		CTScaling scaling = new CTScaling();
-		CTOrientation orient = createVal(CTOrientation.class, STOrientation.MIN_MAX);
-		orient.setVal(STOrientation.MIN_MAX);
-		scaling.setOrientation(orient);
-		catax.setScaling(scaling);
-		catax.setDelete(createBoolean(false));
-		CTAxPos axpos = new CTAxPos();
-		axpos.setVal(STAxPos.B);
-		catax.setAxPos(axpos);
-		catax.setMajorTickMark(createVal(CTTickMark.class, STTickMark.OUT));
-		catax.setMinorTickMark(createVal(CTTickMark.class, STTickMark.NONE));
-		catax.setTickLblPos(createVal(CTTickLblPos.class, STTickLblPos.NEXT_TO));
-		CTShapeProperties sppr = new CTShapeProperties();
-		CTLineProperties ln = new CTLineProperties();
-		ln.setW(9360);
-		sppr.setLn(ln);
-		CTSolidColorFillProperties fill = new CTSolidColorFillProperties();
-		fill.setSrgbClr(createRGBColor(new Color(0xb9, 0xb9, 0xb9)));
-		ln.setSolidFill(fill);
-		ln.setRound(new CTLineJoinRound());
-		catax.setSpPr(sppr);
-		catax.setCrossAx(createUnsignedInt(valaxId));
-		catax.setCrosses(createVal(CTCrosses.class, STCrosses.AUTO_ZERO));
-		catax.setAuto(createBoolean(true));
-		catax.setLblAlgn(createVal(CTLblAlgn.class, STLblAlgn.CTR));
-		CTLblOffset offset = new CTLblOffset();
-		offset.setVal(100);
-		catax.setLblOffset(offset);
-		catax.setNoMultiLvlLbl(createBoolean(true));
-		if (getXAxisLabel() != null) {
-			catax.setTitle(createTitle(900, getXAxisLabel(), null, false, null));
+		if (first) {
+			CTCatAx catax = new CTCatAx();
+			catax.setAxId(createUnsignedInt(cataxId));
+			CTScaling scaling = new CTScaling();
+			CTOrientation orient = createVal(CTOrientation.class, STOrientation.MIN_MAX);
+			orient.setVal(STOrientation.MIN_MAX);
+			scaling.setOrientation(orient);
+			catax.setScaling(scaling);
+			catax.setDelete(createBoolean(false));
+			CTAxPos axpos = new CTAxPos();
+			axpos.setVal(STAxPos.B);
+			catax.setAxPos(axpos);
+			catax.setMajorTickMark(createVal(CTTickMark.class, STTickMark.OUT));
+			catax.setMinorTickMark(createVal(CTTickMark.class, STTickMark.NONE));
+			catax.setTickLblPos(createVal(CTTickLblPos.class, STTickLblPos.NEXT_TO));
+			CTShapeProperties sppr = new CTShapeProperties();
+			CTLineProperties ln = new CTLineProperties();
+			ln.setW(9360);
+			sppr.setLn(ln);
+			CTSolidColorFillProperties fill = new CTSolidColorFillProperties();
+			fill.setSrgbClr(createRGBColor(new Color(0xb9, 0xb9, 0xb9)));
+			ln.setSolidFill(fill);
+			ln.setRound(new CTLineJoinRound());
+			catax.setSpPr(sppr);
+			catax.setCrossAx(createUnsignedInt(valaxId));
+			catax.setCrosses(createVal(CTCrosses.class, STCrosses.AUTO_ZERO));
+			catax.setAuto(createBoolean(true));
+			catax.setLblAlgn(createVal(CTLblAlgn.class, STLblAlgn.CTR));
+			CTLblOffset offset = new CTLblOffset();
+			offset.setVal(100);
+			catax.setLblOffset(offset);
+			catax.setNoMultiLvlLbl(createBoolean(true));
+			if (getXAxisLabel() != null) {
+				catax.setTitle(createTitle(900, getXAxisLabel(), null, false, null));
+			}
+			ctp.getValAxOrCatAxOrDateAx().add(catax);
 		}
-
+		
 		CTValAx valax = new CTValAx();
 		valax.setAxId(createUnsignedInt(valaxId));
-		scaling = new CTScaling();
+		CTScaling scaling = new CTScaling();
 		CTOrientation orientation = new CTOrientation();
 		orientation.setVal(STOrientation.MIN_MAX);
 		scaling.setOrientation(orientation);
 		valax.setScaling(scaling);
 		valax.setDelete(createBoolean(false));
 		CTAxPos pos = new CTAxPos();
-		pos.setVal(STAxPos.L);
+		pos.setVal(axis == 0 ? STAxPos.L : STAxPos.R);
 		valax.setAxPos(pos);
-		if (getYAxisLabel() != null) {
-			valax.setTitle(createTitle(900, getYAxisLabel(), null, false, -90));
+		if (getYAxisLabel(axis) != null) {
+			valax.setTitle(createTitle(900, getYAxisLabel(axis), null, false, axis == 0 ? -90 : 90));
 		}
 		CTTickMark tick = new CTTickMark();
 		tick.setVal(STTickMark.OUT);
@@ -448,20 +453,21 @@ public abstract class XLSXChart implements BuilderMethods {
 		CTTickLblPos lblpos = new CTTickLblPos();
 		lblpos.setVal(STTickLblPos.NEXT_TO);
 		valax.setTickLblPos(lblpos);
-		sppr = new CTShapeProperties();
-		ln = new CTLineProperties();
+		CTShapeProperties sppr = new CTShapeProperties();
+		CTLineProperties ln = new CTLineProperties();
 		ln.setW(9360);
 		sppr.setLn(ln);
-		fill = new CTSolidColorFillProperties();
+		CTSolidColorFillProperties fill = new CTSolidColorFillProperties();
 		fill.setSrgbClr(createRGBColor(new Color(0xb9, 0xb9, 0xb9)));
 		ln.setSolidFill(fill);
 		valax.setSpPr(sppr);
 		valax.setCrossAx(createUnsignedInt(cataxId));
-		valax.setCrossesAt(createDouble(1));
+		CTCrosses crosses = new CTCrosses();
+		crosses.setVal(axis == 0 ? STCrosses.AUTO_ZERO : STCrosses.MAX);
+		valax.setCrosses(crosses);
 		CTCrossBetween between = new CTCrossBetween();
 		between.setVal(STCrossBetween.MID_CAT);
 		valax.setCrossBetween(between);
-		ctp.getValAxOrCatAxOrDateAx().add(catax);
 		ctp.getValAxOrCatAxOrDateAx().add(valax);
 	}
 
@@ -535,15 +541,26 @@ public abstract class XLSXChart implements BuilderMethods {
 	}
 
 	protected CTMarker createMarkerProperties(MarkerProperties markerProps) {
-		//TODO define the marker properly in the series defs
 		//Marker
 		CTMarker marker = new CTMarker();
 		CTMarkerStyle style = new CTMarkerStyle();
 		
 		if (markerProps == null) {
 			style.setVal(STMarkerStyle.NONE);
+		} else {
+			style.setVal(markerProps.getStyle());
 		}
 		marker.setSymbol(style);
+		if (markerProps != null && markerProps.getStyle() != STMarkerStyle.NONE) {
+			CTShapeProperties props = new CTShapeProperties();
+			CTSolidColorFillProperties color = new CTSolidColorFillProperties();
+			color.setSrgbClr(createRGBColor(markerProps.getColor()));
+			props.setSolidFill(color);
+			CTLineProperties line = new CTLineProperties();
+			line.setNoFill(new CTNoFillProperties());
+			props.setLn(line);
+			marker.setSpPr(props);
+		}
 		return marker;
 	}
 
@@ -638,11 +655,21 @@ public abstract class XLSXChart implements BuilderMethods {
 	}
 
 	public String getYAxisLabel() {
-		return yAxisLabel;
+		return getYAxisLabel(0);
+	}
+
+	public String getYAxisLabel(int axis) {
+		return yAxisLabel.get(axis);
 	}
 
 	public void setYAxisLabel(String yAxisLabel) {
-		this.yAxisLabel = yAxisLabel;
+		setYAxisLabel(0, yAxisLabel);
+	}
+	
+	public void setYAxisLabel(int axis, String yAxisLabel) {
+		while (this.yAxisLabel.size() <= axis)
+			this.yAxisLabel.add(null);
+		this.yAxisLabel.set(axis, yAxisLabel);
 	}
 
 }

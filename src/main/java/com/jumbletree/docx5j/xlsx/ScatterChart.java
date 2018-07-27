@@ -9,6 +9,7 @@ import org.docx4j.dml.chart.CTPlotArea;
 import org.docx4j.dml.chart.CTScatterChart;
 import org.docx4j.dml.chart.CTScatterSer;
 import org.docx4j.dml.chart.CTScatterStyle;
+import org.docx4j.dml.chart.STAxPos;
 import org.docx4j.dml.chart.STScatterStyle;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.exceptions.InvalidFormatException;
@@ -100,7 +101,7 @@ public class ScatterChart extends XLSXChart {
 	      //objs.add(objBar);
 	      ctp.getAreaChartOrArea3DChartOrLineChart().add(scatterChart);
 
-	      setupAxes(ctp, cataxId, valaxId);
+	      setupAxes(ctp, cataxId, valaxId, true, 0);
 	}
 
 }
