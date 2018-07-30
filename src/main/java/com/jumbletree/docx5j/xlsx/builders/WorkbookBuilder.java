@@ -66,6 +66,7 @@ import org.xlsx4j.sml.CTColor;
 import org.xlsx4j.sml.CTComment;
 import org.xlsx4j.sml.CTCommentList;
 import org.xlsx4j.sml.CTComments;
+import org.xlsx4j.sml.CTDefinedName;
 import org.xlsx4j.sml.CTFill;
 import org.xlsx4j.sml.CTFills;
 import org.xlsx4j.sml.CTFont;
@@ -91,6 +92,7 @@ import org.xlsx4j.sml.CTVerticalAlignFontProperty;
 import org.xlsx4j.sml.CTXf;
 import org.xlsx4j.sml.CTXstringWhitespace;
 import org.xlsx4j.sml.Cell;
+import org.xlsx4j.sml.DefinedNames;
 import org.xlsx4j.sml.ObjectFactory;
 import org.xlsx4j.sml.Row;
 import org.xlsx4j.sml.STBorderStyle;
@@ -534,10 +536,10 @@ public class WorkbookBuilder implements BuilderMethods {
 	public void setFormula(int sheet, int col, int row, String formula, Long style) throws Docx4JException {
 		Cell theCell = getCell(sheet, col, row);
 
-		theCell.setT(STCellType.N);
+		theCell.setT(STCellType.STR);
 		
 		CTCellFormula f = Context.getsmlObjectFactory().createCTCellFormula();
-		f.setT(org.xlsx4j.sml.STCellFormulaType.NORMAL);
+		//f.setT(org.xlsx4j.sml.STCellFormulaType.NORMAL);
 		f.setValue(formula);
 		theCell.setF(f);
 		if (style != null)
@@ -887,6 +889,40 @@ public class WorkbookBuilder implements BuilderMethods {
 		setup.setId(id);
 		
 		worksheet.sheet.getContents().setPageSetup(setup);
+	}
+	
+	public void setPrintArea(WorksheetBuilder worksheet, char startCellCol, int startCellRow, char endCellCol, int endCellRow) {
+		try {
+			int sheetIndex = sheets.indexOf(worksheet.sheet);
+			DefinedNames names = null;
+			if (pkg.getWorkbookPart().getContents().getDefinedNames() == null) {
+				names = factory.createDefinedNames();
+				pkg.getWorkbookPart().getContents().setDefinedNames(names);
+			} else {
+				names = pkg.getWorkbookPart().getContents().getDefinedNames();
+			}
+			List<CTDefinedName> values = names.getDefinedName();
+			
+			// check if there is already a print_area set for this sheet
+			CTDefinedName localSheet = null;
+			for (CTDefinedName ctdn : values) {
+				if (ctdn.getName().equals("_xlnm.Print_Area") && ctdn.getLocalSheetId().intValue()==sheetIndex) {
+					localSheet = ctdn;
+				}
+			}
+			if (localSheet == null) {
+				localSheet = factory.createCTDefinedName(); 
+				localSheet.setLocalSheetId( Long.valueOf(sheetIndex) );
+				localSheet.setName( "_xlnm.Print_Area"); 
+				values.add(localSheet);
+			}
+			localSheet.setValue(getSheetName(sheetIndex) + "!$" + startCellCol + "$" + startCellRow + ":$"
+					+ endCellCol + "$" + endCellRow);
+
+		} catch (Docx4JException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
