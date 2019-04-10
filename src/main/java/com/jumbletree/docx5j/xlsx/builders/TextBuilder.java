@@ -17,8 +17,7 @@ public class TextBuilder {
 		NO_MODIFICATION((o,l)->{}),
 		SUPERSCRIPT((o,l)->l.add(o.createFontModification(STVerticalAlignRun.SUPERSCRIPT))),
 		SUBSCRIPT((o,l)->l.add(o.createFontModification(STVerticalAlignRun.SUBSCRIPT))),
-		BASELINE((o,l)->l.add(o.createFontModification(STVerticalAlignRun.BASELINE))),
-		;
+		BASELINE((o,l)->l.add(o.createFontModification(STVerticalAlignRun.BASELINE)))		;
 		
 		private BiConsumer<WorkbookBuilder, List<JAXBElement<?>>> mod;
 

@@ -109,11 +109,11 @@ public class XLSXRange {
 	private static String getStr(int col) {
 		if (col >= 26) {
 			int colBit = col % 26;
-			System.out.println("Bit: " + colBit);
+			//System.out.println("Bit: " + colBit);
 			col = col - colBit;
 			col = col / 26;
 			col -= 1;
-			System.out.println("Col: " + col);
+			//System.out.println("Col: " + col);
 			return getStr(col) + getStr(colBit);
 		} else {
 			return String.valueOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(col));

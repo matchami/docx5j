@@ -13,9 +13,9 @@ public class View {
 	private Boolean tabSelected;
 	public View(int workbookViewId, int zoomScaleSheetLayoutView, int zoomScaleNormal, int zoomScale, STSheetViewType view, boolean tabSelected) {
 		this.workbookViewId = workbookViewId;
-		this.zoomScaleSheetLayoutView = new Long(zoomScaleSheetLayoutView);
-		this.zoomScaleNormal = new Long(zoomScaleNormal);
-		this.zoomScale = new Long(zoomScale);
+		this.zoomScaleSheetLayoutView = Long.valueOf(zoomScaleSheetLayoutView);
+		this.zoomScaleNormal = Long.valueOf(zoomScaleNormal);
+		this.zoomScale = Long.valueOf(zoomScale);
 		this.view = view;
 		this.tabSelected = tabSelected;
 	}
