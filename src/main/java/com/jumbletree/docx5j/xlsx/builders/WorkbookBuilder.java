@@ -182,7 +182,7 @@ public class WorkbookBuilder implements BuilderMethods {
     }
 
     public void installStyle(String name, int index) {
-        this.styles.put(name, new Long(index));
+        this.styles.put(name, Long.valueOf(index));
     }
 
     public WorksheetBuilder getSheet(int index) {
@@ -384,7 +384,7 @@ public class WorkbookBuilder implements BuilderMethods {
             int index = stylesheet.getBorders().getBorder().size();
             stylesheet.getBorders().getBorder().add(border);
 
-            objectCache.put(key, id = new Long(index));
+            objectCache.put(key, id = Long.valueOf(index));
         }
         return id;
     }
@@ -407,7 +407,7 @@ public class WorkbookBuilder implements BuilderMethods {
             int index = stylesheet.getFills().getFill().size();
             stylesheet.getFills().getFill().add(fill);
 
-            objectCache.put(key, id = new Long(index));
+            objectCache.put(key, id = Long.valueOf(index));
         }
         return id;
     }
@@ -437,7 +437,7 @@ public class WorkbookBuilder implements BuilderMethods {
             int index = stylesheet.getFonts().getFont().size();
             stylesheet.getFonts().getFont().add(font);
 
-            objectCache.put(key, id = new Long(index));
+            objectCache.put(key, id = Long.valueOf(index));
         }
         return id;
     }
@@ -911,7 +911,7 @@ public class WorkbookBuilder implements BuilderMethods {
     }
 
     public void installThickBottomStyle(int index) {
-        this.thickBottomStyles.add(new Long(index));
+        this.thickBottomStyles.add(Long.valueOf(index));
     }
 
     public boolean isThickBottomStyle(Long style) {
@@ -929,8 +929,8 @@ public class WorkbookBuilder implements BuilderMethods {
 
         CTPageSetup setup = new CTPageSetup();
         setup.setOrientation(orientation);
-        setup.setScale(new Long(scale));
-        setup.setPaperSize(new Long(paperSize));
+        setup.setScale(Long.valueOf(scale));
+        setup.setPaperSize(Long.valueOf(paperSize));
         setup.setId(id);
 
         worksheet.sheet.getContents().setPageSetup(setup);

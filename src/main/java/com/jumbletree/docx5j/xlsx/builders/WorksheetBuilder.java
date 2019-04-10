@@ -140,7 +140,7 @@ public class WorksheetBuilder implements BuilderMethods {
 		List<Row> rows = sheet.getContents().getSheetData().getRow();
 		
 		Row row = new Row();
-		row.setR(new Long(rows.size()+1));
+		row.setR(Long.valueOf(rows.size()+1));
 		rows.add(row);
 		
 		return new RowBuilder(row, this, parent);
@@ -177,14 +177,14 @@ public class WorksheetBuilder implements BuilderMethods {
 		CTPageBreak breaks = sheet.getRowBreaks();
 		if (breaks == null) {
 			sheet.setRowBreaks(breaks = new CTPageBreak());
-			breaks.setCount(new Long(0));
-			breaks.setManualBreakCount(new Long(0));
+			breaks.setCount(Long.valueOf(0));
+			breaks.setManualBreakCount(Long.valueOf(0));
 		}
-		breaks.setCount(new Long(breaks.getCount() + 1));
-		breaks.setManualBreakCount(new Long(breaks.getManualBreakCount() + 1));
+		breaks.setCount(Long.valueOf(breaks.getCount() + 1));
+		breaks.setManualBreakCount(Long.valueOf(breaks.getManualBreakCount() + 1));
 		CTBreak brk = new CTBreak();
 		brk.setMan(true);
-		brk.setId(new Long(after));
+		brk.setId(Long.valueOf(after));
 		if (max != null)
 			brk.setMax(max.longValue());
 		breaks.getBrk().add(brk);

@@ -176,7 +176,7 @@ public class Style {
 		// System.out.println(styles.getJaxbElement().getStyle().size());
 		try {
 			for (int i = 0; i < styles.getContents().getStyle().size(); i++) {
-				if (styles.getContents().getStyle().get(i).getName().equals(styleName)) {
+				if (styles.getContents().getStyle().get(i).getName().toString().equals(styleName)) {
 					styles.getContents().getStyle().set(i, style);
 					added = true;
 					break;
