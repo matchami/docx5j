@@ -101,6 +101,18 @@ public class StyleBuilder {
 		return this;
 	}
 	
+    public StyleBuilder withAlignment(STHorizontalAlignment horizontal, STVerticalAlignment vertical, boolean wrapText,
+            long textRotation) {
+        CTCellAlignment alignment = new CTCellAlignment();
+        alignment.setHorizontal(horizontal);
+        alignment.setVertical(vertical);
+        alignment.setTextRotation(textRotation);
+        this.alignment = alignment;
+        this.alignment.setWrapText(wrapText);
+        return this;
+    }
+
+	
 	
 	public StyleBuilder installAs(String name) {
 		int index = formatId == null && formatDefinition != null ?
