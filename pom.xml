@@ -4,7 +4,7 @@
 
 	<groupId>com.jumbletree</groupId>
 	<artifactId>docx5j</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>docx5j</name>
