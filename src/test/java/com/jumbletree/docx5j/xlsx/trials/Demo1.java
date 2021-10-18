@@ -23,7 +23,7 @@ import com.jumbletree.docx5j.xlsx.XLSXFile;
 import com.jumbletree.docx5j.xlsx.XLSXRange;
 import com.jumbletree.docx5j.xlsx.builders.WorksheetBuilder;
 
-public class FreightForm {
+public class Demo1 {
 
 	public static void main(String[] args) throws JAXBException, Docx4JException, IOException {
 		XLSXFile file = new XLSXFile();
@@ -127,7 +127,7 @@ public class FreightForm {
 
 		sheet			
 			.setPageMargns(.3, .3, .75, .7, .75, .7)
-			.setPageSetup(FreightForm.class.getResourceAsStream("printerSettings1.bin"), STOrientation.LANDSCAPE, 78, 9)
+			.setPageSetup(Demo1.class.getResourceAsStream("printerSettings1.bin"), STOrientation.LANDSCAPE, 78, 9)
 			.addRowBreak(20);
 
 		

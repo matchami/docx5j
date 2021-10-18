@@ -413,9 +413,16 @@ public class WorkbookBuilder implements BuilderMethods {
     }
 
     private CTBorderPr createBorderPr(STBorderStyle style, Color color) {
+    	if (style == null)
+    		return null;
+    	
         CTBorderPr pr = new CTBorderPr();
         CTColor ctcolor = new CTColor();
-        ctcolor.setRgb(getColorBytes(color));
+        if (color == null) {
+        	ctcolor.setAuto(true);
+        } else {
+        	ctcolor.setRgb(getColorBytes(color));
+        }
         pr.setColor(ctcolor);
         pr.setStyle(style);
         return pr;

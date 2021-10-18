@@ -44,14 +44,31 @@ public class RowBuilder {
 	public RowBuilder mergeCells(int start, int end) {
 		CTMergeCells merges = getMergeCells();
 		CTMergeCell merge = new CTMergeCell();
-		XLSXRange range = XLSXRange.fromNumericReference(start, row.getR().intValue()-1, end, row.getR().intValue()-1);
+		int theRow = row.getR().intValue()-1;
+		XLSXRange range = XLSXRange.fromNumericReference(start, theRow, end, theRow);
 		merge.setRef(range.rangeSheetlessReference());
 		merges.getMergeCell().add(merge);
 		merges.setCount((long) merges.getMergeCell().size());
 
 		return this;
 	}
-	
+
+	/**
+	 * Creates a multi-row merge.  Must be called on the _top_ row of the merge
+	 * @return
+	 */
+	public RowBuilder mergeCells(int start, int end, int rows) {
+		CTMergeCells merges = getMergeCells();
+		CTMergeCell merge = new CTMergeCell();
+		int theRow = row.getR().intValue()-1;
+		XLSXRange range = XLSXRange.fromNumericReference(start, theRow, end, theRow + rows - 1);
+		merge.setRef(range.rangeSheetlessReference());
+		merges.getMergeCell().add(merge);
+		merges.setCount((long) merges.getMergeCell().size());
+
+		return this;
+	}
+
 	private CTMergeCells getMergeCells() {
 		try {
 			CTMergeCells cells = parent.sheet.getContents().getMergeCells();

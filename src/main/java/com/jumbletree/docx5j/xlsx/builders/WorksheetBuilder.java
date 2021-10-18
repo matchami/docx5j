@@ -19,6 +19,7 @@ import org.xlsx4j.sml.Col;
 import org.xlsx4j.sml.Cols;
 import org.xlsx4j.sml.Row;
 import org.xlsx4j.sml.STOrientation;
+import org.xlsx4j.sml.SheetView;
 import org.xlsx4j.sml.SheetViews;
 import org.xlsx4j.sml.Worksheet;
 
@@ -61,7 +62,12 @@ public class WorksheetBuilder implements BuilderMethods {
 		return this;
 	}
 
+	@Deprecated
 	public WorksheetBuilder addView(View view) throws Docx4JException {
+		return addView(view.createSheetView());
+	}
+	
+	public WorksheetBuilder addView(SheetView view) throws Docx4JException {
 		Worksheet worksheet = getWorksheet();
 		SheetViews views = worksheet.getSheetViews();
 		if (views == null) {
@@ -69,7 +75,7 @@ public class WorksheetBuilder implements BuilderMethods {
 			worksheet.setSheetViews(views);
 		}
 		
-		views.getSheetView().add(view.createSheetView());
+		views.getSheetView().add(view);
 		return this;
 	}
 

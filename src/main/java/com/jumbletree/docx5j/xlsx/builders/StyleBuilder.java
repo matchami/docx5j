@@ -11,6 +11,35 @@ import org.xlsx4j.sml.STVerticalAlignment;
 
 public class StyleBuilder {
 
+	public static enum Edge {
+		TOP(1), TOP_RIGHT(3), RIGHT(2), BOTTOM_RIGHT(6), BOTTOM(4), BOTTOM_LEFT(12), LEFT(8), TOP_LEFT(9),
+		TOP_BOTTOM(5), LEFT_RIGHT(10),
+		NOT_TOP(14), NOT_RIGHT(13), NOT_BOTTOM(11), NOT_LEFT(7),
+		ALL(15);
+		
+		int sides;
+		
+		Edge(int sides) {
+			this.sides = sides;
+		}
+		
+		public boolean hasLeft() {
+			return (sides & LEFT.sides) > 0;
+		}
+		
+		public boolean hasRight() {
+			return (sides & RIGHT.sides) > 0;
+		}
+		
+		public boolean hasTop() {
+			return (sides & TOP.sides) > 0;
+		}
+		
+		public boolean hasBottom() {
+			return (sides & BOTTOM.sides) > 0;
+		}
+	}
+	
 	private Long formatId;
 	private Long fontId;
 	private Long fillId; 
@@ -53,6 +82,40 @@ public class StyleBuilder {
 		return this;
 	}
 	
+	public StyleBuilder withBorder(STBorderStyle style, Edge edge) {
+		return withBorder(style, null, edge);
+	}
+
+	public StyleBuilder withBorder(STBorderStyle style, Color color, Edge edge) {
+		STBorderStyle topStyle = null; 
+		Color topColor = null; 
+		STBorderStyle rightStyle = null; 
+		Color rightColor = null; 
+		STBorderStyle bottomStyle = null; 
+		Color bottomColor = null; 
+		STBorderStyle leftStyle = null; 
+		Color leftColor = null;
+
+		if (edge.hasTop()) {
+			topStyle = style; 
+			topColor = color;
+		}
+		if (edge.hasRight()) {
+			rightStyle = style; 
+			rightColor = color;
+		}
+		if (edge.hasBottom()) {
+			bottomStyle = style; 
+			bottomColor = color;
+		}
+		if (edge.hasLeft()) {
+			leftStyle = style; 
+			leftColor = color;
+		}
+		
+		return withBorder(topStyle, topColor, rightStyle, rightColor, bottomStyle, bottomColor, leftStyle, leftColor);
+	}
+
 	public StyleBuilder withBorder(STBorderStyle topStyle, Color topColor, STBorderStyle rightStyle, Color rightColor, STBorderStyle bottomStyle, Color bottomColor, STBorderStyle leftStyle, Color leftColor) {
 		this.borderId = parent.createBorder(topStyle, topColor, rightStyle, rightColor, bottomStyle, bottomColor, leftStyle, leftColor);
 		this.thickBottom = false;
@@ -74,12 +137,28 @@ public class StyleBuilder {
 		return this;
 	}
 
+	public StyleBuilder clearBorders() {
+		this.borderId = null;
+		this.thickBottom = false;
+		return this;
+	}
+	
 	public boolean hasThickBottom() {
 		return thickBottom;
 	}
 
 	public void setThickBottom(boolean thickBottom) {
 		this.thickBottom = thickBottom;
+	}
+
+	public StyleBuilder withFill(Color color) {
+		this.fillId = parent.createFill(color, color, STPatternType.SOLID);
+		return this;
+	}
+	
+	public StyleBuilder clearFill() {
+		this.fillId = null;
+		return this;
 	}
 
 	public StyleBuilder withFill(Color bgColor, Color fgColor, STPatternType pattern) {
