@@ -1035,6 +1035,12 @@ public class WorkbookBuilder implements BuilderMethods {
         vertAlign.setVal(type);
         return factory.createCTRPrEltVertAlign(vertAlign);
     }
+    
+    JAXBElement<?> createFontModification(Color color) {
+    	CTColor colorEl = createColor(color);
+        return factory.createCTRPrEltColor(colorEl);
+    }
+
 
     SpreadsheetMLPackage getSpreadsheetMLPackage() {
         return pkg;

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import javax.xml.bind.JAXBException;
 
@@ -15,9 +16,11 @@ import org.xlsx4j.sml.STSheetViewType;
 import org.xlsx4j.sml.STVerticalAlignment;
 
 import com.jumbletree.docx5j.xlsx.XLSXFile;
+import com.jumbletree.docx5j.xlsx.builders.CellBuilder;
 import com.jumbletree.docx5j.xlsx.builders.RowBuilder;
 import com.jumbletree.docx5j.xlsx.builders.SheetViewBuilder;
 import com.jumbletree.docx5j.xlsx.builders.StyleBuilder.Edge;
+import com.jumbletree.docx5j.xlsx.builders.TextModifierBuilder;
 import com.jumbletree.docx5j.xlsx.builders.WorksheetBuilder;
 
 public class Demo2 {
@@ -32,7 +35,11 @@ public class Demo2 {
 		
 		addPageHeader(org, date, sheet);
 		
-		addHeaderRow(sheet, "Consumption (kWh)", true);
+		addHeaderRow(sheet, cell->{
+			cell.multiStyleText()
+				.add("Energy", TextModifierBuilder.newBuilder().withColor(Color.RED).build())
+				.add(" Consumption (kWh)", TextModifierBuilder.newBuilder().withColor(Color.BLACK).build());
+		}, true);
 				
 		//Header row - no data
 		addTableHeaderLine(sheet, "Council Direcorate");
@@ -300,13 +307,17 @@ public class Demo2 {
 	}
 
 	private static void addHeaderRow(WorksheetBuilder sheet, String header, boolean first) throws Docx4JException {
-		sheet
+		addHeaderRow(sheet, cell->cell.value(header), first);
+	}
+	
+	private static void addHeaderRow(WorksheetBuilder sheet, Consumer<CellBuilder> header, boolean first) throws Docx4JException {
+		CellBuilder cell = sheet
 			.nextRow()
 				//.height(32, true)
 				.nextCell()
-					.style(first ? "table-header-top-left" : "table-header-left")
-					.value(header)
-					.row()
+					.style(first ? "table-header-top-left" : "table-header-left");
+					header.accept(cell);
+					cell.row()
 				.cells(7)
 					.style(first ? "table-header-top" : "table-header")
 					.values("This Month Last Year", "This Month Actual", "% Var", "YTD Last Year", "YTD Actual", "% Var", "Forecast 2021/2022")

@@ -11,13 +11,15 @@ import org.xlsx4j.sml.CTRPrElt;
 import org.xlsx4j.sml.CTRst;
 import org.xlsx4j.sml.CTXstringWhitespace;
 
+import com.jumbletree.docx5j.xlsx.builders.text.TextModifier;
+
 public class TextBuilder {
 
-	public static enum Modifier {
+	public static enum Modifier implements TextModifier {
 		NO_MODIFICATION((o,l)->{}),
 		SUPERSCRIPT((o,l)->l.add(o.createFontModification(STVerticalAlignRun.SUPERSCRIPT))),
 		SUBSCRIPT((o,l)->l.add(o.createFontModification(STVerticalAlignRun.SUBSCRIPT))),
-		BASELINE((o,l)->l.add(o.createFontModification(STVerticalAlignRun.BASELINE)))		;
+		BASELINE((o,l)->l.add(o.createFontModification(STVerticalAlignRun.BASELINE)));
 		
 		private BiConsumer<WorkbookBuilder, List<JAXBElement<?>>> mod;
 
@@ -46,13 +48,16 @@ public class TextBuilder {
 		return add(text, Modifier.NO_MODIFICATION);
 	}
 	
-	public TextBuilder add(String text, Modifier mod) {
+	public TextBuilder add(String text, TextModifier mod) {
 		CTRst si = origin.getMultiStyleString(index);
 		List<CTRElt> rs = si.getR();
 		
 		CTRElt r = new CTRElt();
 		CTXstringWhitespace t = new CTXstringWhitespace();
 		t.setValue(text);
+		if (text.startsWith(" ") || text.endsWith(" ")) {
+			t.setSpace("preserve");
+		}
 		r.setT(t);
 
 		if (rs.size() == 0 && mod == Modifier.NO_MODIFICATION) {
